@@ -1,0 +1,7 @@
+# MLproject
+
+name: geo-aware-mro
+
+entry_points:
+  main:
+    command: "python src/mlflow_setup/dummy_run.py"
