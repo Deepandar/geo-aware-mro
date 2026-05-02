@@ -1,7 +1,8 @@
 stages:
-  prepare_data:
-    cmd: python src/utils/data_io.py
+  ingest_m5:
+    cmd: python src/data_ingestion/m5_loader.py
     deps:
-      - src/utils/data_io.py
+      - src/data_ingestion/m5_loader.py
+      - data/raw/m5
     outs:
-      - data/interim
+      - data/processed/m5.duckdb
