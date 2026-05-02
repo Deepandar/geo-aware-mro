@@ -1,0 +1,17 @@
+name: geo-mro
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - jupyterlab
+  - pip:
+      - mlflow
+      - dvc
+      - duckdb
+      - loguru
+      - pytest
