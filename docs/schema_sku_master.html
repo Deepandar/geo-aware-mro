@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SKU Master Schema</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 32px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    h1, h2 { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <h1>SKU Master Schema</h1>
+  <p>Field count: 28</p>
+  <h2>Fields</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th><th>Type</th><th>Nullable</th><th>Source</th><th>Used By</th><th>Validation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>sku_id</td><td>VARCHAR</td><td>False</td><td>master</td><td>forecasting, risk, inventory</td><td>non-empty unique SKU</td></tr><tr><td>item_name</td><td>VARCHAR</td><td>False</td><td>master</td><td>forecasting, inventory</td><td>non-empty</td></tr><tr><td>item_description</td><td>VARCHAR</td><td>True</td><td>master</td><td>inventory</td><td>free text</td></tr><tr><td>category</td><td>VARCHAR</td><td>False</td><td>master</td><td>forecasting, inventory</td><td>non-empty</td></tr><tr><td>subcategory</td><td>VARCHAR</td><td>True</td><td>master</td><td>inventory</td><td>free text</td></tr><tr><td>uom</td><td>VARCHAR</td><td>False</td><td>master</td><td>inventory</td><td>non-empty</td></tr><tr><td>abc_class</td><td>VARCHAR</td><td>False</td><td>derived</td><td>inventory</td><td>A/B/C</td></tr><tr><td>ved_class</td><td>VARCHAR</td><td>False</td><td>derived</td><td>inventory</td><td>V/E/D</td></tr><tr><td>fns_class</td><td>VARCHAR</td><td>False</td><td>derived</td><td>forecasting, inventory</td><td>F/N/S</td></tr><tr><td>class_code</td><td>VARCHAR</td><td>False</td><td>derived</td><td>forecasting, risk, inventory</td><td>len == 3, ABC×VED×FNS</td></tr><tr><td>unit_cost_usd</td><td>DOUBLE</td><td>False</td><td>procurement</td><td>inventory</td><td>&gt; 0</td></tr><tr><td>lead_time_days</td><td>INTEGER</td><td>False</td><td>procurement</td><td>forecasting, inventory</td><td>&gt;= 0</td></tr><tr><td>moq</td><td>INTEGER</td><td>False</td><td>procurement</td><td>inventory</td><td>&gt;= 1</td></tr><tr><td>supplier_id</td><td>VARCHAR</td><td>False</td><td>supplier</td><td>risk, inventory</td><td>non-empty</td></tr><tr><td>supplier_name</td><td>VARCHAR</td><td>False</td><td>supplier</td><td>risk, inventory</td><td>non-empty</td></tr><tr><td>supply_origin_country</td><td>VARCHAR</td><td>False</td><td>supplier</td><td>risk</td><td>ISO-3 country code</td></tr><tr><td>geo_risk_score</td><td>DOUBLE</td><td>False</td><td>risk</td><td>risk, inventory</td><td>0 &lt;= x &lt;= 1</td></tr><tr><td>criticality_score</td><td>DOUBLE</td><td>False</td><td>derived</td><td>inventory</td><td>0 &lt;= x &lt;= 1</td></tr><tr><td>annual_demand_qty</td><td>DOUBLE</td><td>False</td><td>demand</td><td>forecasting, inventory</td><td>&gt;= 0</td></tr><tr><td>avg_monthly_demand_qty</td><td>DOUBLE</td><td>False</td><td>demand</td><td>forecasting</td><td>&gt;= 0</td></tr><tr><td>demand_cv</td><td>DOUBLE</td><td>True</td><td>derived</td><td>forecasting</td><td>&gt;= 0</td></tr><tr><td>intermittency_index</td><td>DOUBLE</td><td>True</td><td>derived</td><td>forecasting</td><td>&gt;= 0</td></tr><tr><td>service_level_target</td><td>DOUBLE</td><td>False</td><td>policy</td><td>inventory</td><td>0 &lt; x &lt; 1</td></tr><tr><td>stockout_cost_usd</td><td>DOUBLE</td><td>False</td><td>policy</td><td>inventory</td><td>&gt; 0</td></tr><tr><td>salvage_value_usd</td><td>DOUBLE</td><td>False</td><td>policy</td><td>inventory</td><td>&gt;= 0 and &lt; stockout_cost_usd</td></tr><tr><td>current_on_hand_qty</td><td>DOUBLE</td><td>False</td><td>inventory</td><td>inventory</td><td>&gt;= 0</td></tr><tr><td>reorder_point_qty</td><td>DOUBLE</td><td>True</td><td>derived</td><td>inventory</td><td>&gt;= 0</td></tr><tr><td>safety_stock_qty</td><td>DOUBLE</td><td>True</td><td>derived</td><td>inventory</td><td>&gt;= 0</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>
