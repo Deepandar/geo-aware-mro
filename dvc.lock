@@ -1,0 +1,15 @@
+schema: '2.0'
+stages:
+  prepare_data:
+    cmd: python src/utils/data_io.py
+    deps:
+    - path: src/utils/data_io.py
+      hash: md5
+      md5: b72fe3db19877ed74fda55971124a085
+      size: 558
+    outs:
+    - path: data/interim
+      hash: md5
+      md5: 8fd4beb149d1d69aa2df25940c970e69.dir
+      size: 2192
+      nfiles: 1

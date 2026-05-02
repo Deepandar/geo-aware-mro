@@ -1,6 +1,13 @@
 __pycache__/
 *.pyc
 .env
-data/*
-!data/**/.gitkeep
 mlruns/
+mlflow.db
+
+data/*
+!data/raw.dvc
+!data/processed.dvc
+!data/external.dvc
+!data/**/.gitkeep
+!data/**/README.md
+!data/**/schema.json
