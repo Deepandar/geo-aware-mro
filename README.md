@@ -1,65 +1,123 @@
 # Geo-Aware MRO Decision Intelligence System
 
-**v1.1** · Production-ready decision intelligence pipeline for MRO (Maintenance, Repair & Overhaul) inventory optimization.
+## Problem Statement
 
-A comprehensive supply chain analytics project that combines **multi-criteria SKU classification** (27-class taxonomy), **intermittent demand forecasting**, **Bayesian geo-risk scoring**, **Newsvendor optimization**, and **game-theoretic supplier strategy** into a unified, reproducible decision engine.
+Maintenance, Repair, and Operations (MRO) inventory management faces three critical challenges:
 
----
+1. **Intermittent Demand**: Spare parts exhibit sporadic, unpredictable demand patterns that traditional forecasting methods (ARIMA, exponential smoothing) fail to capture accurately.
 
-## 🎯 Objectives
+2. **High Stockout Cost**: Critical components have asymmetric costs — holding excess inventory is expensive, but stockouts can ground operations, causing catastrophic downtime.
 
-- Build a production-grade, reproducible analytics pipeline for complex MRO spare parts inventory
-- Classify SKUs using a 27-class taxonomy (ABC × VED × FNS × Location Criticality)
-- Generate demand forecasts tailored to intermittent/lumpy patterns common in aerospace/defense MRO
-- Quantify geographic supplier risk using Bayesian updating on real trade, sanctions, and conflict data
-- Optimize inventory policies with the Newsvendor model adjusted for geo-risk
-- Incorporate strategic supplier intelligence via Decision Trees and Nash Equilibrium modeling
-- Deliver production-ready code, dashboards, and documentation as a strong career/portfolio signal
+3. **Geo-Political Supply Risk**: Global supply chains face disruptions from geopolitical tensions, trade restrictions, and regional instabilities that traditional inventory models ignore.
+
+Traditional forecasting approaches assume continuous, stable demand and fail for sparse time series common in MRO contexts.
 
 ---
 
-## ✨ Key Features (v1.1)
+## Objective
 
-- **27-Class SKU Taxonomy**: ABC (value) × VED (criticality) × FNS (demand pattern) × Location scoring
-- **Demand Characterization**: ADI/CV² quadrant classification
-- **Forecasting Engine**: Croston’s Method, SBA (Syntetos-Boylan Approximation), Holt-Winters, auto-ARIMA + ensemble routing
-- **Bayesian Geo-Risk Layer**: Country-level disruption probability updated with HHI, sanctions, and conflict signals
-- **Newsvendor Optimization**: Risk-adjusted reorder quantities and ROP tables
-- **Supplier Intelligence**: Decision Tree qualification + Nash Equilibrium strategic risk scoring
-- **Interactive Analytics**: Plotly Dash dashboard (classification, forecasts, risk maps)
-- **MLOps Foundation**: Full DVC pipelines, MLflow experiment tracking, Dockerized services, pytest suite
+Build an end-to-end decision intelligence system that combines:
 
----
+- **SKU Classification**: Multi-dimensional categorization (ABC × VED × FSN) to prioritize inventory based on value, criticality, and movement velocity
+- **Intermittent Demand Forecasting**: Croston's method and Syntetos-Boylan Approximation (SBA) for sparse demand patterns
+- **Geo-Risk Quantification**: Bayesian layer incorporating geopolitical risk scores by supplier region
+- **Inventory Optimization**: Newsvendor model with risk-adjusted service levels
 
-## 🛠 Tech Stack
-
-- **Core**: Python 3.11, Pandas, NumPy, DuckDB
-- **Forecasting**: `sktime`, `pmdarima`, Statsmodels
-- **MLOps**: DVC, MLflow, Docker + Docker Compose
-- **Visualization**: Plotly, Dash
-- **Testing & CI**: pytest, GitHub Actions
-- **Documentation**: MkDocs + GitHub Pages
+The system produces actionable recommendations: optimal reorder points, safety stock levels, and supplier diversification strategies.
 
 ---
 
-## 📁 Repository Structure
+## System Architecture
 
-```text
-geo-aware-mro/
-├── data/                  # Raw, processed, and external data (DVC tracked)
-├── notebooks/             # Analysis and weekly deliverables
-├── src/
-│   ├── classifiers/       # ABC, VED, FNS, Location, Supplier DT
-│   ├── forecasting/       # Croston, SBA, HW, ARIMA, router
-│   ├── risk/              # Bayesian Geo-Risk + HHI
-│   ├── optimization/      # Newsvendor, ROP
-│   ├── game_theory/       # Nash Equilibrium
-│   └── utils/             # Pipeline helpers
-├── tests/                 # pytest suite
-├── dashboards/            # Plotly Dash app
-├── mlruns/                # MLflow tracking
-├── dvc.yaml               # Pipeline definitions
-├── Dockerfile
-├── mkdocs.yml
-├── .github/workflows/     # CI/CD
-└── docs/                  # Deployed documentation
+
+
+**Pipeline Flow**:
+1. **Data Ingestion**: Historical demand, supplier data, geo-risk indices (DVC-tracked)
+2. **Preprocessing**: SKU classification, time series aggregation, feature extraction
+3. **Modeling**: Intermittent demand forecasting + geo-risk adjustment (MLflow experiments)
+4. **Optimization**: Newsvendor model for reorder points and safety stock
+5. **Deployment**: Dockerized API + Streamlit dashboard
+
+---
+
+## Tech Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Language** | Python 3.11 | Core development |
+| **Experiment Tracking** | MLflow | Model versioning, hyperparameter tuning |
+| **Data Versioning** | DVC | Track datasets, ensure reproducibility |
+| **Containerization** | Docker, docker-compose | Environment consistency |
+| **CI/CD** | GitHub Actions | Automated testing, quality gates |
+| **Forecasting** | statsmodels, scikit-learn | Croston's, SBA, classification |
+| **Optimization** | SciPy, NumPy | Newsvendor, inventory optimization |
+| **Visualization** | Matplotlib, Seaborn, Streamlit | EDA, dashboard |
+| **Testing** | pytest | Unit and integration tests |
+| **Documentation** | MkDocs Material | Project docs |
+
+---
+
+## Repository Structure
+
+
+---
+
+## Quick Start
+
+### 1. Clone and Setup Environment
+
+```bash
+git clone https://github.com/Deepandar/geo-aware-mro.git
+cd geo-aware-mro
+conda create -n geo-mro python=3.11 -y
+conda activate geo-mro
+pip install -r requirements.txt
+```
+
+### 2. Run with Docker
+
+```bash
+docker-compose up --build
+```
+
+### 3. Run Tests
+
+```bash
+pytest
+```
+
+### 4. View Documentation
+
+```bash
+mkdocs serve
+# Open http://127.0.0.1:8000
+```
+
+---
+
+## Project Status
+
+**Current Phase**: Week 1 — Infrastructure Setup
+
+- [x] Repository initialization
+- [x] DVC setup (data versioning)
+- [x] MLflow tracking configuration
+- [x] Docker containerization
+- [x] CI/CD pipeline (GitHub Actions)
+- [x] Documentation scaffold (MkDocs)
+- [ ] Data ingestion pipeline (Week 2)
+- [ ] SKU classification model (Week 2)
+- [ ] Intermittent demand forecasting (Week 3)
+- [ ] Geo-risk Bayesian layer (Week 4)
+- [ ] Inventory optimization (Week 5)
+- [ ] Dashboard deployment (Week 6+)
+
+---
+
+## Contact
+
+**Deepandar Rathore**  
+Data Scientist | ML Engineer  
+New Delhi, India
+
+GitHub: [@Deepandar](https://github.com/Deepandar)

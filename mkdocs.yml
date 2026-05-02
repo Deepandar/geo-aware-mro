@@ -1,0 +1,9 @@
+site_name: Geo-Aware MRO
+site_description: Decision intelligence system for MRO inventory optimization
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Setup: setup.md
