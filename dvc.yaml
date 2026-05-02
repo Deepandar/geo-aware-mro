@@ -1,0 +1,7 @@
+stages:
+  prepare_data:
+    cmd: python src/utils/data_io.py
+    deps:
+      - src/utils/data_io.py
+    outs:
+      - data/interim
