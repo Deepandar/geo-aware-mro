@@ -1,0 +1,223 @@
+{
+  "properties": {
+    "sku_id": {
+      "title": "Sku Id",
+      "type": "string"
+    },
+    "item_name": {
+      "title": "Item Name",
+      "type": "string"
+    },
+    "item_description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Item Description"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "subcategory": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subcategory"
+    },
+    "uom": {
+      "title": "Uom",
+      "type": "string"
+    },
+    "abc_class": {
+      "enum": [
+        "A",
+        "B",
+        "C"
+      ],
+      "title": "Abc Class",
+      "type": "string"
+    },
+    "ved_class": {
+      "enum": [
+        "V",
+        "E",
+        "D"
+      ],
+      "title": "Ved Class",
+      "type": "string"
+    },
+    "fns_class": {
+      "enum": [
+        "F",
+        "N",
+        "S"
+      ],
+      "title": "Fns Class",
+      "type": "string"
+    },
+    "class_code": {
+      "title": "Class Code",
+      "type": "string"
+    },
+    "unit_cost_usd": {
+      "exclusiveMinimum": 0,
+      "title": "Unit Cost Usd",
+      "type": "number"
+    },
+    "lead_time_days": {
+      "minimum": 0,
+      "title": "Lead Time Days",
+      "type": "integer"
+    },
+    "moq": {
+      "minimum": 1,
+      "title": "Moq",
+      "type": "integer"
+    },
+    "supplier_id": {
+      "title": "Supplier Id",
+      "type": "string"
+    },
+    "supplier_name": {
+      "title": "Supplier Name",
+      "type": "string"
+    },
+    "supply_origin_country": {
+      "title": "Supply Origin Country",
+      "type": "string"
+    },
+    "geo_risk_score": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Geo Risk Score",
+      "type": "number"
+    },
+    "criticality_score": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Criticality Score",
+      "type": "number"
+    },
+    "annual_demand_qty": {
+      "minimum": 0,
+      "title": "Annual Demand Qty",
+      "type": "number"
+    },
+    "avg_monthly_demand_qty": {
+      "minimum": 0,
+      "title": "Avg Monthly Demand Qty",
+      "type": "number"
+    },
+    "demand_cv": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Demand Cv"
+    },
+    "intermittency_index": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Intermittency Index"
+    },
+    "service_level_target": {
+      "exclusiveMaximum": 1,
+      "exclusiveMinimum": 0,
+      "title": "Service Level Target",
+      "type": "number"
+    },
+    "stockout_cost_usd": {
+      "exclusiveMinimum": 0,
+      "title": "Stockout Cost Usd",
+      "type": "number"
+    },
+    "salvage_value_usd": {
+      "minimum": 0,
+      "title": "Salvage Value Usd",
+      "type": "number"
+    },
+    "current_on_hand_qty": {
+      "minimum": 0,
+      "title": "Current On Hand Qty",
+      "type": "number"
+    },
+    "reorder_point_qty": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reorder Point Qty"
+    },
+    "safety_stock_qty": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Safety Stock Qty"
+    }
+  },
+  "required": [
+    "sku_id",
+    "item_name",
+    "category",
+    "uom",
+    "abc_class",
+    "ved_class",
+    "fns_class",
+    "class_code",
+    "unit_cost_usd",
+    "lead_time_days",
+    "moq",
+    "supplier_id",
+    "supplier_name",
+    "supply_origin_country",
+    "geo_risk_score",
+    "criticality_score",
+    "annual_demand_qty",
+    "avg_monthly_demand_qty",
+    "service_level_target",
+    "stockout_cost_usd",
+    "salvage_value_usd",
+    "current_on_hand_qty"
+  ],
+  "title": "SKUMaster",
+  "type": "object"
+}
