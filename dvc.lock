@@ -13,3 +13,20 @@ stages:
       md5: 8fd4beb149d1d69aa2df25940c970e69.dir
       size: 2192
       nfiles: 1
+  ingest_m5:
+    cmd: python src/data_ingestion/m5_loader.py
+    deps:
+    - path: data/raw/m5
+      hash: md5
+      md5: fd8dadf02be529e515e6735c535f5465.dir
+      size: 450472315
+      nfiles: 6
+    - path: src/data_ingestion/m5_loader.py
+      hash: md5
+      md5: 6407d5821bf40d86b35cf1bd8dcb6879
+      size: 1283
+    outs:
+    - path: data/processed/m5.duckdb
+      hash: md5
+      md5: 703f3153204d81d5128af613910ca7a9
+      size: 99102720
