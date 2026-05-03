@@ -11,3 +11,8 @@ data/*
 !data/**/.gitkeep
 !data/**/README.md
 !data/**/schema.json
+# DVC metadata files MUST be tracked
+!*.dvc
+!dvc.yaml
+!dvc.lock
+
