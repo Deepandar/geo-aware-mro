@@ -1,0 +1,11 @@
+{
+  "total_skus": 500,
+  "unique_ids": 500,
+  "hhi_mapped": 500,
+  "hhi_unmapped": 0,
+  "geo_conc_flag_ct": 500,
+  "hhi_band_dist": {
+    "High": 500
+  },
+  "validation_passed": true
+}

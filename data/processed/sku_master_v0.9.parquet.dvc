@@ -1,0 +1,5 @@
+outs:
+- md5: 7cbebd1b775b2d17f7f21cdcfd9cfcbb
+  size: 8497
+  hash: md5
+  path: sku_master_v0.9.parquet
