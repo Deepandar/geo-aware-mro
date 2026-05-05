@@ -1,0 +1,10 @@
+2026-05-05 06:26:09,266 | INFO     | ====================================================================
+2026-05-05 06:26:09,270 | INFO     | ====================================================================
+2026-05-05 06:26:09,442 | INFO     | Loaded SKU Master: 500 rows  from D:\geo-aware-mro\data\processed\sku_master_500.parquet
+2026-05-05 06:26:09,494 | INFO     | HHI loaded from DuckDB: 3 rows
+2026-05-05 06:29:38,914 | INFO     | ====================================================================
+2026-05-05 06:29:38,918 | INFO     | ====================================================================
+2026-05-05 06:29:38,966 | INFO     | Loaded SKU Master: 500 rows  from D:\geo-aware-mro\data\processed\sku_master_500.parquet
+2026-05-05 06:29:38,992 | INFO     | HHI loaded from DuckDB: 3 rows
+2026-05-05 06:29:39,005 | INFO     | Join complete: 500/500 SKUs have HHI data (100.0%)
+2026-05-05 06:29:39,005 | INFO     | geo_conc_flag=1 (High HHI + >50% single source): 500 SKUs

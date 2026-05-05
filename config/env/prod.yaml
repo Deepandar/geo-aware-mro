@@ -1,0 +1,14 @@
+pipeline:
+  paths:
+    input: data/processed/sku_master.csv
+    output: data/processed/sku_output_prod.csv
+
+  execution:
+    auto_generate: false
+
+  mlflow:
+    run_name: sku_pipeline_prod
+
+  logging:
+    level: WARNING
+    format: json

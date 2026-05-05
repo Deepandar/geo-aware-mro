@@ -1,0 +1,13 @@
+criticality_index:
+
+  weights:
+    w1_abc: 0.28
+    w2_ved: 0.25
+    w3_fns: 0.17
+    w4_loc: 0.15
+    w5_ltr: 0.15
+
+  ltr:
+    use_geo_risk: false
+    norm_min_raw: 0.02
+    norm_max_raw: 16.2
