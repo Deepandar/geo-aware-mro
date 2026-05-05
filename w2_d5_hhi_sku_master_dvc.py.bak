@@ -196,35 +196,25 @@ def _synthetic_hhi() -> pd.DataFrame:
 
 def join_hhi(sku: pd.DataFrame, hhi: pd.DataFrame) -> pd.DataFrame:
     """
-    Left-join HHI concentration fields to SKU Master on hs_code.
+    Left-join HHI concentration fields to SKU Master on hs_code → cmdCode.
 
     New columns added to SKU Master:
-      hhi              – Herfindahl-Hirschman Index [0–10 000]
-      hhi_risk_band    – Low / Moderate / High (mapped from hhi_risk)
-      dominant_partner – Country supplying the largest import share
-      dominant_share   – That country's share [0–1]
-      geo_conc_flag    – 1 if High HHI AND dominant_share > 0.50
+      hhi                – Herfindahl-Hirschman Index [0–10 000]
+      hhi_risk_band      – Low / Moderate / High
+      dominant_partner   – Country supplying the largest import share
+      dominant_share     – That country's share [0–1]
+      geo_conc_flag      – 1 if High HHI AND dominant_share > 0.50
     """
-    # Slim HHI table to the needed columns, rename to canonical names
-    hhi_slim = (
-        hhi[["hs_code", "hhi", "hhi_risk", "top_supplier", "top_supplier_share"]]
-        .drop_duplicates("hs_code")
-        .rename(
-            columns={
-                "hs_code": "hs_code_key",
-                "hhi_risk": "hhi_risk_band",
-                "top_supplier": "dominant_partner",
-                "top_supplier_share": "dominant_share",
-            }
-        )
-    )
+    hhi_cols = ["cmdCode", "hhi", "hhi_risk_band",
+                "dominant_partner", "dominant_share"]
+    hhi_slim = hhi[hhi_cols].drop_duplicates("cmdCode")
 
     merged = sku.merge(
         hhi_slim,
         left_on="hs_code",
-        right_on="hs_code_key",
+        right_on="cmdCode",
         how="left",
-    ).drop(columns="hs_code_key", errors="ignore")
+    ).drop(columns="cmdCode", errors="ignore")
 
     # Fill unmapped SKUs with neutral defaults
     merged["hhi"]              = merged["hhi"].fillna(0).astype(int)
@@ -239,47 +229,13 @@ def join_hhi(sku: pd.DataFrame, hhi: pd.DataFrame) -> pd.DataFrame:
     ).astype(int)
 
     matched = (merged["hhi"] > 0).sum()
-    log.info(
-        f"Join complete: {matched}/{len(merged)} SKUs have HHI data "
-        f"({matched/len(merged)*100:.1f}%)"
-    )
-    log.info(
-        "geo_conc_flag=1 (High HHI + >50% single source): "
-        f"{merged['geo_conc_flag'].sum()} SKUs"
-    )
+    log.info(f"Join complete: {matched}/{len(merged)} SKUs have HHI data "
+             f"({matched/len(merged)*100:.1f}%)")
+    log.info(f"geo_conc_flag=1 (High HHI + >50% single source): "
+             f"{merged['geo_conc_flag'].sum()} SKUs")
     return merged
 
-def main() -> None:
-    log.info("=" * 68)
-    log.info("W2-D5 | HHI → SKU Master join + DVC tracking  START")
-    log.info("=" * 68)
 
-    sku_df  = load_sku_master()           # Step 1a
-    hhi_df  = load_hhi_table()            # Step 1b
-    merged  = join_hhi(sku_df, hhi_df)    # Step 2
-
-    # --- Step C2-2: synthetic ltr_score placeholder (lead-time-based) ---
-    mu_lt = max(float(merged["lead_time_days"].mean()), 1.0)
-    geo_risk_score = 0.0  # Week 2 placeholder; true risk comes in W8
-
-    raw_ltr = (merged["lead_time_days"] / mu_lt) * (1.0 + geo_risk_score)
-
-    min_raw = float(raw_ltr.min())
-    max_raw = float(raw_ltr.max())
-
-    if max_raw > min_raw:
-        merged["ltr_score"] = ((raw_ltr - min_raw) / (max_raw - min_raw)).clip(0.0, 1.0)
-    else:
-        merged["ltr_score"] = 0.0
-
-    merged["ltr_score"] = merged["ltr_score"].astype(float)
-    # --- end Step C2-2 block ---
-
-    val     = validate_sku_master(merged) # Step 3
-    persist_artifacts(merged, val)        # Step 4
-    generate_report(merged, val)          # Step 5
-    upsert_dvc_yaml()                     # Step 6
-    print_week2_summary(merged, val)      # Summary
 # ─────────────────────────── STEP 3: VALIDATION ──────────────────────────────
 
 def validate_sku_master(df: pd.DataFrame) -> dict:

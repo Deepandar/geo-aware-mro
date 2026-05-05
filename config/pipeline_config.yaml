@@ -1,0 +1,14 @@
+pipeline:
+
+  paths:
+    input: data/processed/sku_master.csv
+    output: data/processed/sku_output.csv
+
+  execution:
+    auto_generate: true
+
+  mlflow:
+    run_name: sku_pipeline_v1.4
+
+  logging:
+    level: INFO

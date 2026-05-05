@@ -20,8 +20,6 @@ import pandas as pd
 import duckdb
 import mlflow
 from pathlib import Path
-import argparse
-
 
 # ─────────────────────────────────────────────────────────────
 # 1. CONFIGURATION
@@ -109,10 +107,10 @@ def load_sku_master(dbpath: Path = DBPATH) -> pd.DataFrame:
 def compute_composite_index(df: pd.DataFrame) -> pd.DataFrame:
     """
     Compute C_i composite index using normalized class scores.
-
+    
     Formula:
       C_i = w_ABC × s_ABC + w_VED × s_VED + w_FNS × s_FNS + w_Loc × s_Loc
-
+    
     Score mapping:
       ABC: A→1.0, B→0.5, C→0.0
       VED: V→1.0, E→0.5, D→0.0
@@ -120,51 +118,39 @@ def compute_composite_index(df: pd.DataFrame) -> pd.DataFrame:
       Loc: Forward→1.0, Border→0.6, Rear→0.0
     """
     df = df.copy()
-
+    
     # Score maps
     abc_score = {"A": 1.0, "B": 0.5, "C": 0.0}
     ved_score = {"V": 1.0, "E": 0.5, "D": 0.0}
     fns_score = {"F": 0.0, "N": 0.5, "S": 1.0}  # Inverted: Slow → high score
     loc_score = {"Forward": 1.0, "Border": 0.6, "Rear": 0.0}
-
+    
     # Map classes to scores
     df["abcscore"] = df["abcclass"].map(abc_score)
     df["vedscore"] = df["vedclass"].map(ved_score)
     df["fnsscore"] = df["fnsclass"].map(fns_score)
-
+    
     # Location score (handle missing locationtype)
     if "locationtype" in df.columns:
         df["locscore"] = df["locationtype"].map(loc_score).fillna(0.5)
     else:
         print("⚠️  WARNING: 'locationtype' column missing. Setting loc score = 0.5 for all SKUs.")
         df["locscore"] = 0.5
-
-    # ------------------------------------------------------------------
-    # v1.1: Environment multiplier and adjusted location score
-    # ------------------------------------------------------------------
-    if "environment_multiplier" not in df.columns:
-        # v1.1 default: neutral environment; v1.2 will populate this
-        df["environment_multiplier"] = 1.0
-
-    # Base position/location score before environment adjustment
-    df["base_position_score"] = df["locscore"]
-
-    # Adjusted location score (extension point for external env signals)
-    df["location_score_adj"] = (
-        df["base_position_score"] * df["environment_multiplier"]
-    ).clip(0, 1)
-
-    # Compute composite index (uses adjusted location score from v1.1 onward)
+    
+    # Compute composite index
     df["ci"] = (
         WEIGHTS["abc"] * df["abcscore"] +
         WEIGHTS["ved"] * df["vedscore"] +
         WEIGHTS["fns"] * df["fnsscore"] +
-        WEIGHTS["loc"] * df["location_score_adj"]
+        WEIGHTS["loc"] * df["locscore"]
     ).clip(0, 1).round(4)
-
+    
     print(f"✅ Composite index computed: mean={df['ci'].mean():.4f}, std={df['ci'].std():.4f}")
     return df
 
+# ─────────────────────────────────────────────────────────────
+# 4. TAXONOMY CELL ASSIGNMENT
+# ─────────────────────────────────────────────────────────────
 def assign_taxonomy_cells(df: pd.DataFrame) -> pd.DataFrame:
     """
     Create 27-class taxonomy by concatenating ABC × VED × FNS.
@@ -208,102 +194,5 @@ def validate_demand_coverage(df: pd.DataFrame) -> None:
     """
     freq = df['adi'] < ADI_BOUNDARY
     stable = df['cv2'] < CV2_BOUNDARY
-
-    quadrants = {
-        "frequent_stable":        (freq & stable),
-        "frequent_erratic":       (freq & ~stable),
-        "intermittent_stable":    (~freq & stable),
-        "intermittent_erratic":   (~freq & ~stable),
-    }
-
-    counts = {name: mask.sum() for name, mask in quadrants.items()}
-    total = len(df)
-
-    print("\n📊 Syntetos-Boylan demand quadrants coverage:")
-    for name, count in counts.items():
-        pct = (count / total * 100) if total else 0.0
-        print(f"   {name:22s}: {count:4d} SKUs ({pct:5.1f}%)")
-
-    missing = [name for name, count in counts.items() if count == 0]
-    if missing:
-        print("\n⚠️  WARNING: No SKUs in quadrants:", ", ".join(missing))
-        print("    Review classification thresholds (ADI_BOUNDARY, CV2_BOUNDARY).")
-    else:
-        print("\n✅ All 4 demand quadrants represented.")
-
     
-
-# ─────────────────────────────────────────────────────────────
-# 6. MAIN EXECUTION
-# ─────────────────────────────────────────────────────────────
-
-
-def apply_environment_overrides(df: pd.DataFrame, override_path: str | None) -> pd.DataFrame:
-    """
-    Optionally override environment_multiplier from a small CSV file.
-
-    CSV schema:
-        item_id,environment_multiplier
-
-    Rows that don't match an item_id in df are ignored.
-    """
-    if not override_path:
-        return df
-
-    override_file = Path(override_path)
-    if not override_file.exists():
-        print(f"⚠️  WARNING: environment override file not found: {override_file}")
-        return df
-
-    overrides = pd.read_csv(override_file)
-
-    required_cols = {"item_id", "environment_multiplier"}
-    missing = required_cols - set(overrides.columns)
-    if missing:
-        print(f"⚠️  WARNING: override file missing columns: {missing}; ignoring overrides.")
-        return df
-
-    # Keep only the two needed columns, drop duplicates
-    overrides = overrides[["item_id", "environment_multiplier"]].drop_duplicates("item_id")
-
-    # Left-join overrides onto df
-    df = df.merge(
-        overrides,
-        on="item_id",
-        how="left",
-        suffixes=("", "_env_override"),
-    )
-
-    # If override present, use it; else keep existing environment_multiplier
-    if "environment_multiplier_env_override" in df.columns:
-        mask = df["environment_multiplier_env_override"].notna()
-        if "environment_multiplier" not in df.columns:
-            df["environment_multiplier"] = 1.0
-        df.loc[mask, "environment_multiplier"] = df.loc[mask, "environment_multiplier_env_override"]
-        df = df.drop(columns=["environment_multiplier_env_override"])
-
-    return df
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--env-overrides",
-        type=str,
-        default=None,
-        help="Optional CSV path with columns [item_id, environment_multiplier].",
-    )
-    args = parser.parse_args()
-
-    df = load_sku_master()
-    df = apply_environment_overrides(df, args.env_overrides)
-    df = compute_composite_index(df)
-    df = assign_taxonomy_cells(df)
-    validate_demand_coverage(df)
-
-    output_path = DATADIR / "skumaster500.parquet"
-    df.to_parquet(output_path, index=False)
-
-    print(f"\n✅ Final output saved to: {output_path}")
-    print(f"✅ Final dataset shape: {df.shape}")
-
+    quadrants =
