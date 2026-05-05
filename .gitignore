@@ -1,18 +1,14 @@
 __pycache__/
 *.pyc
-.env
+*.pyo
+
 mlruns/
-mlflow.db
+logs/
 
-data/*
-!data/raw.dvc
-!data/processed.dvc
-!data/external.dvc
-!data/**/.gitkeep
-!data/**/README.md
-!data/**/schema.json
-# DVC metadata files MUST be tracked
-!*.dvc
-!dvc.yaml
-!dvc.lock
+data/processed/*.csv
+data/raw/*.csv
 
+*.bak
+
+.env
+.vscode/
