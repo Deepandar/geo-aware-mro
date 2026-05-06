@@ -12,3 +12,8 @@ data/raw/*.csv
 
 .env
 .vscode/
+
+# Large datasets
+data/raw/m5/
+data/processed/*.duckdb
+*.duckdb
