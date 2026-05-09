@@ -1,37 +1,74 @@
-# src/classifiers/dominance_check.py
+"""
+Dominance bias detection and remediation.
 
-import pandas as pd
+Protects ABC classification from heavy-tail SKU concentration.
+"""
+
+from dataclasses import dataclass
+
 import numpy as np
+import pandas as pd
 
 
+@dataclass
 class DominanceChecker:
+    """
+    Detect and remediate concentration dominance.
+    """
 
-    def __init__(self, top_pct=0.01, threshold=0.5):
-        self.top_pct = top_pct
-        self.threshold = threshold
+    top_pct: float = 0.01
+    dominance_threshold: float = 0.50
 
-    def check_and_remediate(self, df: pd.DataFrame):
-        if "annual_consumption_value" not in df.columns:
-            raise ValueError("Missing column: annual_consumption_value")
+    def check_and_remediate(
+        self,
+        df: pd.DataFrame,
+        acv_col: str = "annual_consumption_value",
+    ):
+        """
+        Detect concentration dominance and optionally remediate.
+
+        Returns:
+            (df, result_dict)
+        """
 
         df = df.copy()
 
-        total = float(df["annual_consumption_value"].sum())
-        n_top = max(1, int(len(df) * self.top_pct))
+        if acv_col not in df.columns:
+            raise ValueError(f"Missing column: {acv_col}")
 
-        top = df.nlargest(n_top, "annual_consumption_value")
-        ratio = float(top["annual_consumption_value"].sum() / total)
+        total = df[acv_col].sum()
 
-        bias = bool(ratio > self.threshold)
+        sorted_df = df.sort_values(
+            by=acv_col,
+            ascending=False,
+        )
 
-        if bias:
-            print(f"⚠ DOMINANCE DETECTED: {ratio:.2%}")
-            df["acv_for_abc"] = np.log1p(df["annual_consumption_value"])
+        top_n = max(1, int(len(df) * self.top_pct))
+
+        concentration_ratio = (
+            sorted_df.head(top_n)[acv_col].sum()
+            / total
+        )
+
+        bias_detected = (
+            concentration_ratio >= self.dominance_threshold
+        )
+
+        if bias_detected:
+            print(
+                f"⚠ DOMINANCE DETECTED: "
+                f"{concentration_ratio:.2%}"
+            )
+
+            df["acv_for_abc"] = np.log1p(df[acv_col])
+
         else:
-            df["acv_for_abc"] = df["annual_consumption_value"]
+            df["acv_for_abc"] = df[acv_col]
 
-        return df, {
-            "bias_detected": bias,
-            "concentration_ratio": ratio,
-            "top_n": int(n_top)
+        result = {
+            "bias_detected": bool(bias_detected),
+            "concentration_ratio": float(concentration_ratio),
+            "top_n": int(top_n),
         }
+
+        return df, result

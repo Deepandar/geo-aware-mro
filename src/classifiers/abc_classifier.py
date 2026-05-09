@@ -1,33 +1,61 @@
-# src/classifiers/abc_classifier.py
-
 import pandas as pd
 
 
-def classify_abc(df: pd.DataFrame) -> pd.DataFrame:
-    if "unit_cost" not in df.columns or "demand" not in df.columns:
-        raise ValueError("Missing required columns: unit_cost, demand")
+def classify_abc(
+    df: pd.DataFrame,
+    cut_a: float = 0.80,
+    cut_b: float = 0.95,
+) -> pd.DataFrame:
 
     df = df.copy()
 
     if "annual_consumption_value" not in df.columns:
-        df["annual_consumption_value"] = df["unit_cost"] * df["demand"]
 
-    df = df.sort_values(by="annual_consumption_value", ascending=False)
+        if "demand" in df.columns:
+            demand_col = "demand"
+        elif "demand_mean" in df.columns:
+            demand_col = "demand_mean"
+        else:
+            raise ValueError(
+                "Missing required column: demand or demand_mean"
+            )
 
-    total_acv = df["annual_consumption_value"].sum()
-    if total_acv == 0:
-        raise ValueError("Total ACV is zero")
+        if "unit_cost" not in df.columns:
+            raise ValueError(
+                "Missing required column: unit_cost"
+            )
 
-    df["cum_acv"] = df["annual_consumption_value"].cumsum()
-    df["cum_pct"] = df["cum_acv"] / total_acv
+        df["annual_consumption_value"] = (
+            df["unit_cost"]
+            * df[demand_col]
+        )
 
-    def assign_class(p):
-        if p <= 0.8:
+    total = df["annual_consumption_value"].sum()
+
+    if total == 0:
+        df["abc_class"] = "C"
+        return df
+
+    df = df.sort_values(
+        by="annual_consumption_value",
+        ascending=False,
+    )
+
+    df["cum_pct"] = (
+        df["annual_consumption_value"].cumsum()
+        / total
+    )
+
+    def assign_class(value: float) -> str:
+        if value <= cut_a:
             return "A"
-        elif p <= 0.95:
+        if value <= cut_b:
             return "B"
         return "C"
 
     df["abc_class"] = df["cum_pct"].apply(assign_class)
 
-    return df.reset_index(drop=True)
+    return df
+
+
+compute_abc = classify_abc

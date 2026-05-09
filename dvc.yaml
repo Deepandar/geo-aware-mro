@@ -1,8 +1,43 @@
 stages:
-  ingest_m5:
-    cmd: python src/data_ingestion/m5_loader.py
+
+  generate_sku_master:
+    cmd: python src/data_ingestion/synthetic_sku_master.py
     deps:
-      - src/data_ingestion/m5_loader.py
-      - data/raw/m5
+      - src/data_ingestion/synthetic_sku_master.py
+      - config/criticality_config.yaml
+      - config/location_config.yaml
     outs:
-      - data/processed/m5.duckdb
+      - data/raw/sku_master_raw.parquet
+
+  run_sku_pipeline:
+    cmd: python src/pipelines/sku_pipeline.py
+
+    deps:
+      - src/pipelines/sku_pipeline.py
+
+      - src/classifiers/dominance_check.py
+      - src/classifiers/abc_classifier.py
+      - src/classifiers/ved_classifier.py
+      - src/classifiers/fns_classifier.py
+      - src/classifiers/location_scorer.py
+      - src/classifiers/ltr_scorer.py
+      - src/classifiers/criticality_index.py
+      - src/classifiers/newsvendor.py
+
+      - config/criticality_config.yaml
+      - config/location_config.yaml
+      - config/tsl_config.yaml
+
+      - data/raw/sku_master_raw.parquet
+
+    params:
+      - criticality.weights
+      - ltr.use_geo_risk
+      - dominance.remediation
+
+    outs:
+      - data/processed/sku_master_v1.1.parquet
+
+    metrics:
+      - data/processed/pipeline_metrics.json:
+          cache: false

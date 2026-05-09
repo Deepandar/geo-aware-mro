@@ -1,19 +1,40 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# MLflow
 mlruns/
+mlflow.db
+
+# Logs
 logs/
+*.log
 
-data/processed/*.csv
-data/raw/*.csv
+# Data
+data/raw/
+data/processed/
 
-*.bak
+# DVC cache
+.dvc/cache/
 
-.env
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
 .vscode/
+.idea/
 
-# Large datasets
-data/raw/m5/
-data/processed/*.duckdb
-*.duckdb
+# Temp
+*.bak
+*.tmp

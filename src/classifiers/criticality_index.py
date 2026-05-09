@@ -1,64 +1,302 @@
 # src/classifiers/criticality_index.py
 
+from __future__ import annotations
+
+import logging
+
+import numpy as np
 import pandas as pd
-import yaml
 
 
-def load_config():
-    with open("config/criticality_config.yaml", "r") as f:
-        return yaml.safe_load(f)["criticality_index"]
+logger = logging.getLogger(__name__)
+
+
+EPSILON = 1e-6
 
 
 class CriticalityIndexer:
 
+    """
+    Robust Criticality Indexer (v1.5)
+
+    Features:
+        - robust scaling
+        - Laplacian smoothing
+        - Black Swan stability
+        - existential sourcing override
+        - NaN firewall
+        - heavy-tail resilience
+    """
+
     def __init__(self):
-        cfg = load_config()
 
-        self.weights = cfg["weights"]
+        logger.info(
+            "CriticalityIndexer initialised"
+        )
 
-        self.abc_map = {"A": 1.0, "B": 0.5, "C": 0.0}
-        self.ved_map = {"V": 1.0, "E": 0.5, "D": 0.0}
-        self.fns_map = {"F": 1.0, "N": 0.5, "S": 0.0}
+    # -------------------------------------------------------------
+    # Main compute
+    # -------------------------------------------------------------
 
-    def compute(self, df: pd.DataFrame) -> pd.DataFrame:
-        required = [
+    def compute(
+        self,
+        df: pd.DataFrame,
+    ) -> pd.DataFrame:
+
+        self._validate(df)
+
+        out = df.copy()
+
+        # ---------------------------------------------------------
+        # Encode categorical dimensions
+        # ---------------------------------------------------------
+
+        abc_map = {
+            "A": 1.0,
+            "B": 0.6,
+            "C": 0.3,
+        }
+
+        ved_map = {
+            "Vital": 1.0,
+            "Essential": 0.6,
+            "Desirable": 0.3,
+            "V": 1.0,
+            "E": 0.6,
+            "D": 0.3,
+        }
+
+        fns_map = {
+            "Fast": 1.0,
+            "Normal": 0.7,
+            "Slow": 0.4,
+            "Smooth": 1.0,
+            "Erratic": 0.8,
+            "Intermittent": 0.5,
+            "Lumpy": 0.3,
+        }
+
+        out["abc_score"] = (
+            out["abc_class"]
+            .map(abc_map)
+            .fillna(0.5)
+        )
+
+        out["ved_score"] = (
+            out["ved_class"]
+            .map(ved_map)
+            .fillna(0.5)
+        )
+
+        out["fns_score"] = (
+            out["fns_class"]
+            .map(fns_map)
+            .fillna(0.5)
+        )
+
+        # ---------------------------------------------------------
+        # Robust log-LTR scaling
+        # ---------------------------------------------------------
+
+        ltr = np.log1p(
+            out["ltr_score"]
+            .astype(float)
+            .fillna(0.5)
+        )
+
+        median_ltr = float(
+            ltr.median()
+        )
+
+        iqr_ltr = float(
+            ltr.quantile(0.75)
+            - ltr.quantile(0.25)
+        )
+
+        iqr_ltr = max(
+            iqr_ltr,
+            EPSILON,
+        )
+
+        robust_ltr = (
+            ltr - median_ltr
+        ) / iqr_ltr
+
+        robust_ltr = np.clip(
+            robust_ltr,
+            -3,
+            3,
+        )
+
+        robust_ltr = (
+            robust_ltr + 3
+        ) / 6
+
+        robust_ltr = robust_ltr.fillna(
+            0.5
+        )
+
+        # ---------------------------------------------------------
+        # Geo-risk scaling
+        # ---------------------------------------------------------
+
+        geo = np.log1p(
+            out["geo_risk_score"]
+            .astype(float)
+            .fillna(0.5)
+        )
+
+        geo = np.clip(
+            geo,
+            0.0,
+            1.0,
+        )
+
+        # ---------------------------------------------------------
+        # Base weighted CI
+        # ---------------------------------------------------------
+
+        out["ci_score"] = (
+
+            0.25 * out["abc_score"]
+
+            + 0.25 * out["ved_score"]
+
+            + 0.15 * out["fns_score"]
+
+            + 0.20 * robust_ltr
+
+            + 0.15 * geo
+        )
+
+        # ---------------------------------------------------------
+        # EXISTENTIAL OVERRIDE:
+        # Alternative sourcing required
+        # automatically becomes CRITICAL
+        # ---------------------------------------------------------
+
+        if (
+            "alternative_sourcing_required"
+            in out.columns
+        ):
+
+            alt_mask = (
+                out[
+                    "alternative_sourcing_required"
+                ]
+                == True
+            )
+
+            out.loc[
+                alt_mask,
+                "ci_score"
+            ] = 1.0
+
+        # ---------------------------------------------------------
+        # NaN firewall
+        # ---------------------------------------------------------
+
+        nan_mask = (
+            out["ci_score"]
+            .isna()
+        )
+
+        if nan_mask.any():
+
+            logger.warning(
+                (
+                    "NaN CI detected | "
+                    "fallback=%d"
+                ),
+                int(
+                    nan_mask.sum()
+                ),
+            )
+
+            out.loc[
+                nan_mask,
+                "ci_score"
+            ] = 0.95
+
+        # ---------------------------------------------------------
+        # Final clipping
+        # ---------------------------------------------------------
+
+        out["ci_score"] = np.clip(
+            out["ci_score"],
+            0.0,
+            1.0,
+        )
+
+        # ---------------------------------------------------------
+        # Operational bands
+        # ---------------------------------------------------------
+
+        out["ci_band"] = pd.cut(
+            out["ci_score"],
+            bins=[0, 0.4, 0.7, 1.0],
+            labels=[
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+            ],
+            include_lowest=True,
+        )
+
+        logger.info(
+            (
+                "Criticality scoring complete | "
+                "mean=%.3f | "
+                "high=%d | "
+                "critical=%d"
+            ),
+            float(
+                out["ci_score"].mean()
+            ),
+            int(
+                (
+                    out["ci_score"] > 0.7
+                ).sum()
+            ),
+            int(
+                (
+                    out["ci_score"] == 1.0
+                ).sum()
+            ),
+        )
+
+        return out
+
+    # -------------------------------------------------------------
+    # Validation
+    # -------------------------------------------------------------
+
+    def _validate(
+        self,
+        df: pd.DataFrame,
+    ) -> None:
+
+        required = {
             "abc_class",
             "ved_class",
             "fns_class",
-            "location_score_adj",
-            "ltr_score"
-        ]
+            "ltr_score",
+            "geo_risk_score",
+        }
 
-        missing = set(required) - set(df.columns)
+        missing = required - set(df.columns)
+
         if missing:
-            raise ValueError(f"Missing columns: {missing}")
 
-        df = df.copy()
+            raise ValueError(
+                (
+                    "Missing columns: "
+                    f"{missing}"
+                )
+            )
 
-        # encode
-        df["abc_score"] = df["abc_class"].map(self.abc_map)
-        df["ved_score"] = df["ved_class"].map(self.ved_map)
-        df["fns_score"] = df["fns_class"].map(self.fns_map)
+        if df.empty:
 
-        # 5D Criticality Index
-        df["ci_score"] = (
-            self.weights["w1_abc"] * df["abc_score"] +
-            self.weights["w2_ved"] * df["ved_score"] +
-            self.weights["w3_fns"] * df["fns_score"] +
-            self.weights["w4_loc"] * df["location_score_adj"] +
-            self.weights["w5_ltr"] * df["ltr_score"]
-        )
-
-        df["ci_score"] = df["ci_score"].clip(0.0, 1.0)
-
-        # tiering
-        def assign_tier(x):
-            if x >= 0.66:
-                return "High"
-            elif x >= 0.33:
-                return "Medium"
-            return "Low"
-
-        df["ci_tier"] = df["ci_score"].apply(assign_tier)
-
-        return df
+            raise ValueError(
+                "Empty dataframe"
+            )

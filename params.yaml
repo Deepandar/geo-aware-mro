@@ -1,3 +1,45 @@
-data:
-  source: "m5"
-  version: "v1"
+# DVC experiment parameters
+# Any change here invalidates dependent stages.
+
+criticality:
+
+  weights:
+    w1_abc: 0.28
+    w2_ved: 0.25
+    w3_fns: 0.17
+    w4_loc: 0.15
+    w5_ltr: 0.15
+
+  cvs_floor: 0.40
+
+
+location:
+
+  base_position_scores:
+    Forward: 3
+    Border: 2
+    Rear: 1
+
+  use_environment_profiles: false
+
+
+ltr:
+
+  use_geo_risk: false
+
+  norm_min_raw: 0.02
+  norm_max_raw: 16.2
+
+
+dominance:
+
+  top_pct: 0.01
+
+  dominance_threshold: 0.50
+
+  remediation: "log_normalize"
+
+
+tsl:
+
+  geo_risk_adjustment: false

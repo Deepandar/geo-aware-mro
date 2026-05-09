@@ -1,73 +1,84 @@
-# src/utils/sku_master_schema.py
+"""
+SKU Master field registry — single source of truth for all classifiers.
+Add new fields here first; classifiers read REQUIRED_COLS from this module.
+"""
 
-SKU_MASTER_FIELDS = {
-    # --- EXISTING FIELDS ---
-    "item_id": {
-        "dtype": "str",
-        "description": "Primary key"
-    },
-    "unit_cost": {
-        "dtype": "float",
-        "description": "Unit cost (INR/USD)"
-    },
-    "demand": {
-        "dtype": "float",
-        "description": "Annual demand quantity"
-    },
-    "lead_time_days": {
-        "dtype": "int",
-        "description": "Baseline lead time"
-    },
-    "supply_origin_country": {
-        "dtype": "str",
-        "description": "ISO country code"
-    },
-    "equipment_density_score": {
-        "dtype": "float",
-        "description": "Asset density at depot [0,1]"
-    },
-    "stockout_cost_usd": {
-        "dtype": "float",
-        "description": "Penalty for stockout"
-    },
+# ── Core identity ─────────────────────────────────────────────────────────────
+IDENTITY_COLS = ["item_id"]
 
-    # --- NEW FIELDS: Concept 1 additions (W3D5) ---
-    "environment_multiplier": {
-        "dtype": "float",
-        "default": 1.0,
-        "range": [0.8, 1.5],
-        "description": (
-            "v1.1: Static default=1.0. "
-            "v1.2 extension point: populated by NASA CMAPSS operating context "
-            "(climate zone, sortie rate, asset health index). "
-            "Multiplies base_position_score to yield location_score_adj."
-        ),
-        "version_introduced": "v1.1",
-        "populated_by": "v1.2 — NASA CMAPSS + operational context layer"
-    },
-    "location_score_adj": {
-        "dtype": "float",
-        "default": None,
-        "description": (
-            "Adjusted location score = base_position_score × environment_multiplier. "
-            "In v1.1 this equals base_position_score (multiplier=1.0). "
-            "Drives Ci weighting via w4 dimension."
-        ),
-        "version_introduced": "v1.1",
-        "computed_by": "location_scorer.compute_location_score()"
-    },
-    #  Concept 2 additions (W3D5) 
-    "ltr_score": {
-        "dtype":       "float",
-        "default":     0.0,
-        "range":       [0.0, 1.0],
-        "description": (
-            "Lead Time Risk score normalized [0,1]. "
-            "Formula: normalize(lead_time_days_i / mu_LT  (1 + geo_risk_score_i)). "
-            "v1.1: geo_risk_score=0.0 (placeholder until W7-W8 Bayesian layer). "
-            "v1.2: live geo_risk_score from Bayesian posterior replaces placeholder."
-        ),
-        "version_introduced": "v1.1",
-        "populated_by":       "src/classifiers/ltr_scorer.py"
-    },
-}
+# ── ABC inputs ───────────────────────────────────────────────────────────────
+ABC_COLS = ["unit_cost", "demand"]
+
+# ── VED inputs ───────────────────────────────────────────────────────────────
+VED_COLS = ["equipment_density_score"]
+
+# ── FNS inputs ───────────────────────────────────────────────────────────────
+FNS_COLS = ["adi", "cv_squared"]
+
+# ── Location inputs ──────────────────────────────────────────────────────────
+LOCATION_COLS = [
+    "depot_tier",
+    "environment_multiplier",
+    "location_score_adj",
+]
+
+# ── LTR inputs ───────────────────────────────────────────────────────────────
+LTR_COLS = [
+    "lead_time_days",
+    "supply_origin_country",
+    "geo_risk_score",
+    "ltr_score",
+]
+
+# ── Newsvendor inputs ────────────────────────────────────────────────────────
+NEWSVENDOR_COLS = [
+    "mean_demand",
+    "std_demand",
+    "mean_lead_time",
+    "std_lead_time",
+    "stockout_cost_usd",
+]
+
+# ── Classification outputs ──────────────────────────────────────────────────
+CLASSIFICATION_OUTPUT_COLS = [
+    "acv",
+    "acv_for_abc",
+    "abc_class",
+    "ved_class",
+    "fns_class",
+    "abc_score",
+    "ved_score",
+    "fns_score",
+    "ci_score",
+    "ci_tier",
+    "cvs_flag",
+    "tsl",
+    "critical_ratio",
+    "q_star",
+    "rop",
+    "z_score",
+    "sigma_rop",
+    "demand_dist_used",
+]
+
+# ── Full schema ──────────────────────────────────────────────────────────────
+V1_1_SCHEMA = (
+    IDENTITY_COLS
+    + ABC_COLS
+    + VED_COLS
+    + FNS_COLS
+    + LOCATION_COLS
+    + LTR_COLS
+    + NEWSVENDOR_COLS
+)
+
+# ── Validation helper ────────────────────────────────────────────────────────
+def validate_columns(df, required: list, caller: str = "unknown") -> None:
+    """Raise ValueError listing missing columns with caller context."""
+    missing = set(required) - set(df.columns)
+
+    if missing:
+        raise ValueError(
+            f"[{caller}] Missing required columns: {sorted(missing)}\n"
+            f"Available: {sorted(df.columns.tolist())}"
+        )

@@ -1,7 +1,21 @@
 # tests/unit/test_mlflow_setup.py
 
-from src.mlflow_setup.dummy_run import run_dummy_experiment
+from unittest.mock import patch
 
 
-def test_dummy_run_executes():
-    run_dummy_experiment()
+@patch("mlflow.start_run")
+@patch("mlflow.log_param")
+@patch("mlflow.log_metric")
+def test_dummy_run_executes(
+    mock_metric,
+    mock_param,
+    mock_run,
+):
+
+    from src.utils.mlflow_setup import (
+        setup_mlflow
+    )
+
+    setup_mlflow()
+
+    assert True

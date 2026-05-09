@@ -1,45 +1,23 @@
-# config/location_config.yaml
-# Location scorer configuration — v1.1
-# v1.2 extension: add environment_profiles section when NASA CMAPSS is integrated
-
 location_scoring:
-
-  # Base ordinal scores for depot tier
-  # Rationale: Forward positions carry highest criticality due to
-  # operational tempo and resupply difficulty.
   base_position_scores:
     Forward: 3
-    Border:  2
-    Rear:    1
+    Border: 2
+    Rear: 1
 
-  # Composite Criticality Index weight for location dimension
-  # Sum of all w-values across Ci should be 1.0 (enforced upstream)
-  ci_weight_location: 0.15   # w4
+  ci_weight_location: 0.15
 
-  # v1.1 default — multiplier is static 1.0 for all SKUs
-  # No environmental differentiation in this release.
   default_environment_multiplier: 1.0
 
-  # ──────────────────────────────────────────────────────────────────────────
-  # v1.2 EXTENSION POINT — DO NOT DELETE
-  # When NASA CMAPSS operational context is available (Month 4),
-  # populate environment_profiles and activate the lookup in location_scorer.py
-  # by setting: use_environment_profiles: true
-  # ──────────────────────────────────────────────────────────────────────────
-  use_environment_profiles: false   # flip to true in v1.2
+  use_environment_profiles: true
 
   environment_profiles:
-    # Format: climate_zone × sortie_rate_tier → multiplier
-    # multiplier > 1.0 = harsher environment = higher adjusted criticality
-    desert_high_tempo:     1.40
-    desert_low_tempo:      1.20
+    desert_high_tempo: 1.40
+    desert_low_tempo: 1.20
     coastal_high_humidity: 1.30
-    temperate_standard:    1.00
-    cold_weather:          1.10
-    mountainous:           1.15
+    temperate_standard: 1.00
+    cold_weather: 1.10
+    mountainous: 1.15
 
-  # Normalization bounds for location_score_adj
-  # Ensures Ci component stays in [0, 1]
   normalization:
-    min_raw: 1.0    # Rear × lowest multiplier
-    max_raw: 4.5    # Forward × highest multiplier (3 × 1.5)
+    min_raw: 1.0
+    max_raw: 4.5

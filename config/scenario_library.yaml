@@ -1,0 +1,103 @@
+# -------------------------------------------------------------------
+# GEO-AWARE MRO — Black Swan Scenario Library (v1.2)
+# -------------------------------------------------------------------
+# Purpose:
+#   Defines stochastic disruption scenarios used by:
+#     - Bayesian geo-risk scoring
+#     - stochastic lead-time modelling
+#     - SimPy DES stress testing
+#     - Monte Carlo scenario analysis
+#
+# Version: v1.2
+# -------------------------------------------------------------------
+
+scenario_library:
+
+  sanctions:
+    description: "Targeted export sanctions on high-tech components"
+
+    affected_origins:
+      - RU
+      - CN
+
+    lead_time_shift:
+      distribution: gamma
+      mu_multiplier: 4.0
+      sigma_multiplier: 6.0
+
+    activation_probability: 0.15
+    geo_risk_delta: 0.65
+    duration_days: 180
+    stockout_cost_multiplier: 1.5
+
+  conflict:
+    description: "Active kinetic conflict disrupting supply routes"
+
+    affected_origins:
+      - RU
+      - UA
+      - BY
+
+    lead_time_shift:
+      distribution: gamma
+      mu_multiplier: 5.0
+      sigma_multiplier: 8.0
+
+    activation_probability: 0.08
+    geo_risk_delta: 0.90
+    duration_days: 365
+    stockout_cost_multiplier: 2.0
+
+  pandemic:
+    description: "Global supply chain disruption"
+
+    affected_origins:
+      - CN
+      - IN
+      - TW
+      - KR
+
+    lead_time_shift:
+      distribution: lognormal
+      mu_multiplier: 2.5
+      sigma_multiplier: 3.0
+
+    activation_probability: 0.05
+    geo_risk_delta: 0.55
+    duration_days: 270
+    stockout_cost_multiplier: 1.8
+
+  port_closure:
+    description: "Critical maritime chokepoint closure"
+
+    affected_origins:
+      - AE
+      - SA
+      - KW
+      - IR
+
+    lead_time_shift:
+      distribution: gamma
+      mu_multiplier: 3.0
+      sigma_multiplier: 4.0
+
+    activation_probability: 0.10
+    geo_risk_delta: 0.45
+    duration_days: 90
+    stockout_cost_multiplier: 1.3
+
+  logistics_collapse:
+    description: "Systemic freight network collapse"
+
+    affected_origins:
+      - ALL
+
+    lead_time_shift:
+      distribution: gamma
+      mu_multiplier: 2.0
+      sigma_multiplier: 2.5
+
+    activation_probability: 0.07
+    geo_risk_delta: 0.35
+    duration_days: 120
+    stockout_cost_multiplier: 1.4

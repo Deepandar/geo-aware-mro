@@ -1,40 +1,110 @@
-# src/classifiers/location_scorer.py
+from dataclasses import dataclass
 
 import pandas as pd
-import numpy as np
 
 
+@dataclass
 class LocationScorer:
 
-    def __init__(self):
-        self.base_scores = {
-            "Forward": 3,
-            "Border": 2,
-            "Rear": 1
-        }
-        self.norm_min = 1.0
-        self.norm_max = 3.0  # v1.1 (multiplier = 1.0)
+    config_path: str | None = None
 
-    def _get_base_score(self, tier: str) -> float:
-        return float(self.base_scores.get(tier, 1.0))
+    forward_score: float = 3.0
+    border_score: float = 2.0
+    rear_score: float = 1.0
 
-    def _normalize(self, val: float) -> float:
-        return (val - self.norm_min) / (self.norm_max - self.norm_min)
+    use_env_profiles: bool = False
 
-    def score(self, df: pd.DataFrame) -> pd.DataFrame:
-        if "depot_tier" not in df.columns:
-            raise ValueError("Missing required column: depot_tier")
+    REQUIRED_COLUMNS = {
+        "depot_tier",
+        "equipment_density_score",
+    }
+
+    def score_sku_master(
+        self,
+        df: pd.DataFrame,
+    ) -> pd.DataFrame:
 
         df = df.copy()
 
-        # default multiplier (v1.1)
+        missing = (
+            self.REQUIRED_COLUMNS
+            - set(df.columns)
+        )
+
+        if missing:
+            raise ValueError(
+                "missing required columns"
+            )
+
         if "environment_multiplier" not in df.columns:
             df["environment_multiplier"] = 1.0
 
-        df["base_position_score"] = df["depot_tier"].apply(self._get_base_score)
+        mapping = {
+            "Forward": self.forward_score,
+            "Border": self.border_score,
+            "Rear": self.rear_score,
+        }
 
-        raw = df["base_position_score"] * df["environment_multiplier"]
+        df["base_position_score"] = (
+            df["depot_tier"]
+            .map(mapping)
+            .fillna(self.rear_score)
+        )
 
-        df["location_score_adj"] = raw.apply(self._normalize).clip(0, 1)
+        raw_score = (
+            df["base_position_score"]
+            * df["environment_multiplier"]
+        )
+
+        min_raw = raw_score.min()
+        max_raw = raw_score.max()
+
+        if max_raw == min_raw:
+            df["location_score_adj"] = 0.5
+        else:
+            df["location_score_adj"] = (
+                (raw_score - min_raw)
+                / (max_raw - min_raw)
+            )
+
+        return df
+
+    def score(
+        self,
+        df: pd.DataFrame,
+    ) -> pd.DataFrame:
+
+        df = df.copy()
+
+        if "environment_multiplier" not in df.columns:
+            df["environment_multiplier"] = 1.0
+
+        mapping = {
+            "Forward": self.forward_score,
+            "Border": self.border_score,
+            "Rear": self.rear_score,
+        }
+
+        df["base_position_score"] = (
+            df["depot_tier"]
+            .map(mapping)
+            .fillna(self.rear_score)
+        )
+
+        raw_score = (
+            df["base_position_score"]
+            * df["environment_multiplier"]
+        )
+
+        min_raw = raw_score.min()
+        max_raw = raw_score.max()
+
+        if max_raw == min_raw:
+            df["location_score"] = 0.5
+        else:
+            df["location_score"] = (
+                (raw_score - min_raw)
+                / (max_raw - min_raw)
+            )
 
         return df
