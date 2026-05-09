@@ -41,9 +41,31 @@ def test_tsl_is_bounded(pipeline_output):
     assert pipeline_output["tsl"].between(0, 1).all()
 
 
-def test_qstar_positive(pipeline_output):
-    assert (pipeline_output["q_star"] > 0).all()
+def test_qstar_non_negative(
+    pipeline_output,
+):
+    """
+    Bellman policy may legitimately
+    choose zero-order states.
 
+    Ensure only that no negative
+    replenishment quantities exist.
+    """
 
+    assert (
+        pipeline_output["q_star"] >= 0
+    ).all()
+def test_qstar_responsiveness(
+    pipeline_output,
+):
+    """
+    Ensure Bellman engine is capable
+    of generating replenishment
+    decisions for at least some SKUs.
+    """
+
+    assert (
+        pipeline_output["q_star"] > 0
+    ).any()
 def test_rop_positive(pipeline_output):
     assert (pipeline_output["rop"] > 0).all()

@@ -50,16 +50,16 @@ from src.classifiers.ltr_scorer import (
     LTRScorer,
 )
 
-from src.classifiers.newsvendor import (
-    NewsvendorEngine,
-)
-
 from src.classifiers.ved_classifier import (
     classify_ved,
 )
 
 from src.data_ingestion.synthetic_sku_master import (
     generate_sku_master,
+)
+
+from src.optimization.bellman_engine import (
+    BellmanEngine,
 )
 
 
@@ -313,10 +313,6 @@ def run_pipeline(
 
         df = ci.compute(df)
 
-        # ---------------------------------------------------------
-        # Backward compatibility alias
-        # ---------------------------------------------------------
-
         if "ci_band" in df.columns:
 
             df["ci_tier"] = (
@@ -350,38 +346,41 @@ def run_pipeline(
         )
 
         # ---------------------------------------------------------
-        # Stage 13
+        # Stage 13 — Bellman Optimisation
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 13/13 — Newsvendor"
+            "Stage 13/13 — Bellman Optimisation"
         )
 
-        engine = NewsvendorEngine()
+        bellman = BellmanEngine()
 
-        df = engine.compute(df)
+        df = bellman.compute(df)
 
         # ---------------------------------------------------------
         # Backward compatibility aliases
         # ---------------------------------------------------------
 
-        if "bellman_q_star" in df.columns:
+        df["q_star"] = (
+            df["bellman_q_star"]
+        )
 
-            df["q_star"] = (
-                df["bellman_q_star"]
-            )
+        df["rop"] = (
+            df["bellman_rop"]
+        )
 
-        if "bellman_rop" in df.columns:
+        # ---------------------------------------------------------
+        # Dynamic service level approximation
+        # ---------------------------------------------------------
 
-            df["rop"] = (
-                df["bellman_rop"]
-            )
-
-        if "bellman_tsl" in df.columns:
-
-            df["tsl"] = (
-                df["bellman_tsl"]
-            )
+        df["tsl"] = np.clip(
+            0.85
+            + (
+                df["ci_score"] * 0.15
+            ),
+            0.85,
+            0.995,
+        )
 
         # ---------------------------------------------------------
         # ROP sanitation
@@ -405,9 +404,10 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         required_outputs = [
-            "q_star",
-            "rop",
-            "tsl",
+            "bellman_q_star",
+            "bellman_rop",
+            "expected_future_cost",
+            "state_value",
             "ci_tier",
         ]
 
@@ -421,6 +421,10 @@ def run_pipeline(
                         f"required column: {col}"
                     )
                 )
+
+        # ---------------------------------------------------------
+        # MLflow metrics
+        # ---------------------------------------------------------
 
         mlflow.log_metric(
             "mean_tsl",
@@ -587,12 +591,11 @@ if __name__ == "__main__":
             [
                 "supply_origin_country",
                 "geo_risk_score",
-                "active_scenario",
-                "scenario_lt_multiplier",
-                "resilience_multiplier",
                 "ltr_score",
                 "ci_score",
-                "tsl",
+                "bellman_q_star",
+                "bellman_rop",
+                "expected_future_cost",
             ]
         ].head()
     )
