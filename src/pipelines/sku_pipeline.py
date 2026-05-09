@@ -366,6 +366,65 @@ def run_pipeline(
 
         df = bellman.compute(df)
 
+        # =========================================================
+        # STAGE 14 — SUPPLIER QUALIFICATION
+        # =========================================================
+
+        logger.info(
+            "Stage 14/15 — Supplier Qualification"
+        )
+
+        supplier_engine = DecisionTreeQualifier(
+            max_depth=5,
+            random_state=42,
+        )
+
+        df = supplier_engine.fit_predict(
+            df
+        )[0]
+
+        logger.info(
+            (
+                "Supplier qualification complete | "
+                "critical=%d"
+            ),
+            int(
+                (
+                    df[
+                        "supplier_risk_class"
+                    ]
+                    == "Critical"
+                ).sum()
+            ),
+        )
+
+        # =========================================================
+        # STAGE 15 — NASH EQUILIBRIUM
+        # =========================================================
+
+        logger.info(
+            "Stage 15/15 — Nash Equilibrium"
+        )
+
+        nash_engine = NashEquilibriumEngine()
+
+        df = nash_engine.compute(df)
+
+        logger.info(
+            (
+                "Nash equilibrium complete | "
+                "strategic=%d"
+            ),
+            int(
+                (
+                    df[
+                        "supplier_strategy"
+                    ]
+                    == "Strategic"
+                ).sum()
+            ),
+        )
+
         # ---------------------------------------------------------
         # Backward compatibility aliases
         # ---------------------------------------------------------
