@@ -171,9 +171,14 @@ class ScenarioManager:
             # Temporal compatibility
             # -----------------------------------------------------
 
-            duration = scenario_cfg[
-                "duration_days"
-            ]
+            # Backward-compatible duration handling
+            duration = scenario_cfg.get(
+                "duration_days",
+                scenario_cfg.get(
+                    "duration_periods",
+                    30,
+                ),
+            )
 
             if sim_time is not None:
 
@@ -192,17 +197,86 @@ class ScenarioManager:
                 "lead_time_shift"
             ]
 
-            mu_mult = dist_cfg[
-                "mu_multiplier"
-            ]
+            # -------------------------------------------------
+            # Backward-compatible LT multiplier handling
+            #
+            # Legacy schema:
+            #   lead_time_shift:
+            #       mu_multiplier:
+            #       sigma_multiplier:
+            #
+            # Week19 schema:
+            #   lead_time_shift:
+            #       HIGH_RISK:
+            #           mu_mult:
+            #           sigma_mult:
+            # -------------------------------------------------
 
-            sigma_mult = dist_cfg[
-                "sigma_multiplier"
-            ]
+            if "mu_multiplier" in dist_cfg:
 
-            distribution = dist_cfg[
-                "distribution"
-            ]
+                mu_mult = dist_cfg.get(
+                    "mu_multiplier",
+                    1.0,
+                )
+
+                sigma_mult = dist_cfg.get(
+                    "sigma_multiplier",
+                    1.0,
+                )
+
+            else:
+
+                country_cluster = "UNKNOWN"
+
+                try:
+
+                    from src.simulation.lead_time_fitter import (
+                        COUNTRY_CLUSTERS,
+                    )
+
+                    country_cluster = COUNTRY_CLUSTERS.get(
+                        str(
+                            out.loc[
+                                mask,
+                                "supply_origin_country"
+                            ].iloc[0]
+                        ).upper(),
+                        "UNKNOWN",
+                    )
+
+                except Exception:
+                    pass
+
+                cluster_cfg = dist_cfg.get(
+                    country_cluster,
+                    {},
+                )
+
+                mu_mult = cluster_cfg.get(
+                    "mu_mult",
+                    1.0,
+                )
+
+                sigma_mult = cluster_cfg.get(
+                    "sigma_mult",
+                    1.0,
+                )
+
+            # ---------------------------------------------
+            # Backward-compatible distribution handling
+            #
+            # Legacy schema:
+            #   distribution: gamma/lognormal/etc
+            #
+            # Week19 schema:
+            #   distribution omitted
+            #   (Gamma handled centrally by Week18 engine)
+            # ---------------------------------------------
+
+            distribution = dist_cfg.get(
+                "distribution",
+                "gamma",
+            )
 
             affected_idx = out.loc[
                 mask
