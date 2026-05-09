@@ -502,7 +502,7 @@ def run_pipeline(
         )
 
         mlflow.log_metric(
-            "mean_qstar",
+            "mean_q_star",
             float(
                 df["q_star"].mean()
             ),
@@ -560,7 +560,7 @@ def run_pipeline(
                     ].mean()
                 ),
 
-            "mean_qstar":
+            "mean_q_star":
                 float(
                     df[
                         "q_star"
