@@ -146,7 +146,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 1/13 — Generate SKU Master"
+            "Stage 1/13 â€” Generate SKU Master"
         )
 
         df = generate_sku_master(
@@ -163,7 +163,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 2/13 — Dominance Check"
+            "Stage 2/13 â€” Dominance Check"
         )
 
         df["annual_consumption_value"] = (
@@ -194,7 +194,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 3/13 — ABC Classification"
+            "Stage 3/13 â€” ABC Classification"
         )
 
         df = classify_abc(df)
@@ -204,7 +204,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 4/13 — VED Classification"
+            "Stage 4/13 â€” VED Classification"
         )
 
         df = classify_ved(df)
@@ -214,7 +214,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 5/13 — FNS Classification"
+            "Stage 5/13 â€” FNS Classification"
         )
 
         df = classify_fns(df)
@@ -224,7 +224,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 6/13 — Location Scoring"
+            "Stage 6/13 â€” Location Scoring"
         )
 
         scorer = LocationScorer()
@@ -236,7 +236,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 7/13 — Bayesian Geo-Risk"
+            "Stage 7/13 â€” Bayesian Geo-Risk"
         )
 
         risk_scorer = BayesianRiskScorer(
@@ -252,7 +252,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 8/13 — Scenario Injection"
+            "Stage 8/13 â€” Scenario Injection"
         )
 
         scenario_mgr = ScenarioManager()
@@ -274,7 +274,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 9/13 — Resilience Decay"
+            "Stage 9/13 â€” Resilience Decay"
         )
 
         resilience = ResilienceEngine()
@@ -296,7 +296,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 10/13 — Compound LTR"
+            "Stage 10/13 â€” Compound LTR"
         )
 
         ltr = LTRScorer()
@@ -315,7 +315,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 11/13 — Criticality Index"
+            "Stage 11/13 â€” Criticality Index"
         )
 
         ci = CriticalityIndexer()
@@ -340,7 +340,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 12/13 — RUL Engine"
+            "Stage 12/13 â€” RUL Engine"
         )
 
         rul_engine = RULEngine()
@@ -355,11 +355,11 @@ def run_pipeline(
         )
 
         # ---------------------------------------------------------
-        # Stage 13 — Bellman Optimisation
+        # Stage 13 â€” Bellman Optimisation
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 13/13 — Bellman Optimisation"
+            "Stage 13/13 â€” Bellman Optimisation"
         )
 
         bellman = BellmanEngine()
@@ -367,11 +367,11 @@ def run_pipeline(
         df = bellman.compute(df)
 
         # =========================================================
-        # STAGE 14 — SUPPLIER QUALIFICATION
+        # STAGE 14 â€” SUPPLIER QUALIFICATION
         # =========================================================
 
         logger.info(
-            "Stage 14/15 — Supplier Qualification"
+            "Stage 14/15 â€” Supplier Qualification"
         )
 
         supplier_engine = DecisionTreeQualifier(
@@ -399,11 +399,11 @@ def run_pipeline(
         )
 
         # =========================================================
-        # STAGE 15 — NASH EQUILIBRIUM
+        # STAGE 15 â€” NASH EQUILIBRIUM
         # =========================================================
 
         logger.info(
-            "Stage 15/15 — Nash Equilibrium"
+            "Stage 15/15 â€” Nash Equilibrium"
         )
 
         nash_engine = NashEquilibriumEngine()
@@ -613,11 +613,11 @@ def run_pipeline(
 
 
         # =========================================================
-        # STAGE 16 � NASA CMAPSS
+        # STAGE 16 - NASA CMAPSS
         # =========================================================
 
         logger.info(
-            "Stage 16/18 � NASA CMAPSS"
+            "Stage 16/18 - NASA CMAPSS"
         )
 
         cmapss_loader = NASACMAPSSLoader(
@@ -643,11 +643,11 @@ def run_pipeline(
         )
 
         # =========================================================
-        # STAGE 17 � PUSH/PULL
+        # STAGE 17 - PUSH/PULL
         # =========================================================
 
         logger.info(
-            "Stage 17/18 � Push/Pull"
+            "Stage 17/18 - Push/Pull"
         )
 
         pp_engine = PushPullEngine(
@@ -672,11 +672,11 @@ def run_pipeline(
         )
 
         # =========================================================
-        # STAGE 18 � REPEATED GAME
+        # STAGE 18 - REPEATED GAME
         # =========================================================
 
         logger.info(
-            "Stage 18/18 � Repeated Game"
+            "Stage 18/18 - Repeated Game"
         )
 
         rg_model = RepeatedGameModel(
