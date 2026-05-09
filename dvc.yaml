@@ -41,3 +41,17 @@ stages:
     metrics:
       - data/processed/pipeline_metrics.json:
           cache: false
+
+  week16_registry:
+
+    cmd: python -m src.pipelines.sku_pipeline
+
+    deps:
+      - src/mlflow_setup/model_registry_v2.py
+      - src/suppliers/repeated_game.py
+      - src/optimization/push_pull_engine.py
+
+    outs:
+      - data/processed/model_registry_v2.json
+      - data/processed/reputation_matrix.parquet
+

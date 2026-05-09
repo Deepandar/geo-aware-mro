@@ -43,3 +43,30 @@ dominance:
 tsl:
 
   geo_risk_adjustment: false
+
+week16:
+
+  version: "v1.2-alpha"
+
+  repeated_game:
+
+    enabled: true
+
+    T: 24
+
+    discount_factor: 0.92
+
+    grim_trigger_threshold: 1
+
+  push_pull:
+
+    enabled: true
+
+    push_density_threshold: 0.50
+
+    pull_rul_threshold: 20.0
+
+  registry:
+
+    enabled: true
+
