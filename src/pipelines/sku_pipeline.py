@@ -1,55 +1,16 @@
-
-from src.suppliers.decision_tree_qualifier import (
-    DecisionTreeQualifier,
-)
-
-from src.suppliers.nash_equilibrium import (
-    NashEquilibriumEngine,
-)
-
-# src/pipelines/sku_pipeline.py
+"""
+Main SKU intelligence pipeline.
+"""
 
 from pathlib import Path
 import json
-import logging
 
-import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
 import pandas as pd
 
-
-from src.data_ingestion.nasa_cmapss_loader import (
-    NASACMAPSSLoader,
-)
-import seaborn as sns
-from src.optimization.push_pull_engine import (
-)
-
-from src.suppliers.repeated_game import (
-)
-
-from src.mlflow_setup.model_registry_v2 import (
-)
-
-from src.pdm.rul_engine import (
-    RULEngine,
-)
-
-from src.geo.risk_scorer import (
-    BayesianRiskScorer,
-)
-
-from src.risk.scenario_manager import (
-    ScenarioManager,
-)
-
-from src.risk.resilience_engine import (
-    ResilienceEngine,
-)
-
 from src.classifiers.abc_classifier import (
-    classify_abc,
+    ABCClassifier,
 )
 
 from src.classifiers.criticality_index import (
@@ -57,11 +18,11 @@ from src.classifiers.criticality_index import (
 )
 
 from src.classifiers.dominance_check import (
-    DominanceChecker,
+    dominance_check,
 )
 
 from src.classifiers.fns_classifier import (
-    classify_fns,
+    FNSClassifier,
 )
 
 from src.classifiers.location_scorer import (
@@ -73,41 +34,59 @@ from src.classifiers.ltr_scorer import (
 )
 
 from src.classifiers.ved_classifier import (
-    classify_ved,
+    VEDClassifier,
 )
 
 from src.data_ingestion.synthetic_sku_master import (
     generate_sku_master,
 )
 
+from src.data_ingestion.nasa_cmapss_loader import (
+    NASACMAPSSLoader,
+)
+
+from src.geo.risk_scorer import (
+    BayesianRiskScorer,
+)
+
 from src.optimization.bellman_engine import (
     BellmanEngine,
 )
 
-
-logging.basicConfig(
-    level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(name)s | "
-        "%(message)s"
-    ),
+from src.optimization.push_pull_engine import (
+    PushPullEngine,
 )
 
-logger = logging.getLogger(__name__)
-
-
-OUTPUT_PATH = Path(
-    "data/processed/sku_master_v1.3.parquet"
+from src.pdm.rul_engine import (
+    RULEngine,
 )
 
-METRICS_PATH = Path(
-    "data/processed/pipeline_metrics.json"
+from src.risk.resilience_engine import (
+    ResilienceEngine,
 )
 
-FIGURES_DIR = Path(
-    "reports/figures"
+from src.risk.scenario_manager import (
+    ScenarioManager,
+)
+
+from src.suppliers.decision_tree_qualifier import (
+    DecisionTreeQualifier,
+)
+
+from src.suppliers.nash_equilibrium import (
+    NashEquilibriumModel,
+)
+
+from src.suppliers.repeated_game import (
+    RepeatedGameModel,
+)
+
+from src.mlflow_setup.model_registry_v2 import (
+    register_all_v1_2_models,
+)
+
+from src.utils.mlflow_setup import (
+    setup_mlflow,
 )
 
 
