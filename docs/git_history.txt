@@ -1,0 +1,65 @@
+* 8dbb082 (HEAD -> feature/v1.2-beta-api-serving, origin/main, origin/HEAD, main) fix: restore stable pipeline imports and Week16 integration
+* 1d08974 fix: rebuild sku pipeline import section
+* 7de91e4 fix: hard patch Week16 orchestration imports
+* a4442c9 fix: restore NASA CMAPSS integration import
+* 092c852 fix: sanitize utf8 encoding and activate Week16 stages
+* 6016462 feat: activate Week16 intelligent orchestration
+* 1ec03b4 fix: correctly orchestrate v1.2-alpha intelligent stages
+* 05a4844 fix: stabilize v1.2-alpha registry and dvc runtime
+* 536f941 (tag: v1.2-alpha) feat: activate v1.2-alpha full intelligent pipeline
+* 1294360 feat: implement repeated supplier game and grim trigger
+* 2732578 fix: resolve Week14 config schema drift
+* 48091bd fix: restore backward-compatible v1.2 config schema
+* 587465b feat: implement Week 14 push-pull decoupling engine
+* 1d62c8f fix: align DP visualizer with production Bellman engine
+* 8141a3d feat: add Bellman DP visualization layer
+* 6863c69 feat: finalize enterprise metrics export
+* 4cecde7 fix: standardize mean_q_star metrics key
+* 6420aec fix: repair metrics export syntax corruption
+* 4c4adfe fix: add mean_q_star to pipeline metrics export
+* b8b7a3c test: add full v1.1 integration release gate
+* 49adbf7 (origin/feature/month3-monte-carlo-digital-twin, feature/month3-monte-carlo-digital-twin) chore: remove generated artifacts from version control
+* ec4be48 feat: integrate supplier intelligence and game theory layers
+* 5f5909b test: add root conftest for pytest path resolution
+* 3d37968 chore: configure test coverage exclusion for research modules
+* 223f2ad (tag: v1.1) v1.1 Supplier Intelligence + Nash Equilibrium
+* b004bae Month 2 complete - Bellman stochastic optimization validated
+* 3725ec3 Month 1 complete - hardened stochastic intelligence foundation
+* ec76340 chore: remove large datasets and duckdb from git tracking
+* e8b1b1f chore: clean repo (remove logs, backups, add gitignore)
+* abee0c9 feat: complete geo-aware MRO pipeline (ML + OR + MLOps)
+* 1e6eea0 Update Week 3 Day 4 scorer
+* 2c70f9e feat: refine FNS classifier with diverse demand patterns
+* 53e43d8 feat: add VED classifier with supply fragility index
+* 986914a Add Week 1 Day 4 Docker notebook and Week 2 Day 5 DVC script
+* 79a10db Week 3 Day 1: ABC classification engine complete
+* 45200e3 data(W2-D5): add DVC metadata and validation outputs for SKU Master v0.9
+* 1d7822a data(W2-D5): SKU Master v0.9 with HHI concentration data
+* 7c73a9a feat: W2D3 -- ABC/VED/FNS classifiers + Ci index + 25 tests
+* 11ca489 chore: track generated sku master schema artifact
+* 9530e12 feat: W2D2 -- SKU Master schema, 28 fields, Pydantic v2, DuckDB DDL
+* 01f5e07 feat: W2D1 — M5 ingestion + DuckDB + profiling
+* 0d3662a feat: W1D5 — README v0.1 + mkdocs scaffold
+* f25a1fa feat: W1D4 — Docker, CI, and pytest setup
+* 629c0d2 chore: W1D3 — DVC init, pipeline DAG, data layer
+* fbccde0 Add MLflow setup with dummy experiment and unit test
+* b52157d Add README for Geo-Aware MRO Decision System
+* a005055 chore: W1D1 scaffold
+* 68c55ce Initial commit
+* ea7864d (origin/develop) feat: complete geo-aware MRO pipeline (ML + OR + MLOps)
+* 00a8fe7 Update Week 3 Day 4 scorer
+* d727dfe feat: refine FNS classifier with diverse demand patterns
+* 4c38561 feat: add VED classifier with supply fragility index
+* 7aef75e Add Week 1 Day 4 Docker notebook and Week 2 Day 5 DVC script
+* 060a574 Week 3 Day 1: ABC classification engine complete
+* b2acc16 (tag: data-w2-sku-master-v0.9) data(W2-D5): add DVC metadata and validation outputs for SKU Master v0.9
+* 24f6c06 data(W2-D5): SKU Master v0.9 with HHI concentration data
+* 59d14b9 feat: W2D3 -- ABC/VED/FNS classifiers + Ci index + 25 tests
+* 4e510f8 chore: track generated sku master schema artifact
+* e1d9785 feat: W2D2 -- SKU Master schema, 28 fields, Pydantic v2, DuckDB DDL
+* 35f1de8 feat: W2D1 — M5 ingestion + DuckDB + profiling
+* 1d3fd86 feat: W1D5 — README v0.1 + mkdocs scaffold
+* 34fef5a feat: W1D4 — Docker, CI, and pytest setup
+* 5ebf6ca chore: W1D3 — DVC init, pipeline DAG, data layer
+* 1b9c673 Add MLflow setup with dummy experiment and unit test
+* 8213db7 chore: W1D1 scaffold
