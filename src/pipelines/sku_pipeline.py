@@ -567,6 +567,23 @@ def run_pipeline(
                     ].mean()
                 ),
 
+            "n_critical_suppliers":
+                int(
+                    (
+                        df[
+                            "supplier_risk_class"
+                        ]
+                        == "Critical"
+                    ).sum()
+                ),
+
+            "mean_strategic_risk":
+                float(
+                    df[
+                        "strategic_risk_score"
+                    ].mean()
+                ),
+
             "active_disruptions":
                 int(
                     df[
