@@ -38,3 +38,13 @@ Thumbs.db
 # Temp
 *.bak
 *.tmp
+# Coverage
+.coverage
+htmlcov/
+
+# Debug artifacts
+pipeline_diff.txt
+
+# Pytest cache
+.pytest_cache/
+
