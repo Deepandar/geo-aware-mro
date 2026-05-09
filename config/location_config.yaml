@@ -1,23 +1,2 @@
-location_scoring:
-  base_position_scores:
-    Forward: 3
-    Border: 2
-    Rear: 1
-
-  ci_weight_location: 0.15
-
-  default_environment_multiplier: 1.0
-
-  use_environment_profiles: true
-
-  environment_profiles:
-    desert_high_tempo: 1.40
-    desert_low_tempo: 1.20
-    coastal_high_humidity: 1.30
-    temperate_standard: 1.00
-    cold_weather: 1.10
-    mountainous: 1.15
-
-  normalization:
-    min_raw: 1.0
-    max_raw: 4.5
+use_environment_profiles: true
+environment_profile_version: v1.2
