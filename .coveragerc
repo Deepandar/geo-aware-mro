@@ -1,0 +1,14 @@
+[run]
+omit =
+    src/mlflow_setup/*
+    src/utils/logger.py
+    src/utils/config_loader.py
+    src/utils/data_io.py
+    src/utils/sku_master.py
+    src/utils/sku_master_schema.py
+
+    src/simulation/distribution_fitting.py
+    src/simulation/monte_carlo_rollout.py
+    src/simulation/scenario_correlation.py
+    src/simulation/simulator_pipeline.py
+    src/simulation/visualization_pipeline.py
