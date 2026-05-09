@@ -17,6 +17,11 @@ import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
 import pandas as pd
+
+
+from src.data_ingestion.nasa_cmapss_loader import (
+    NASACMAPSSLoader,
+)
 import seaborn as sns
 
 from src.pdm.rul_engine import (
