@@ -1,16 +1,42 @@
-"""
-Main SKU intelligence pipeline.
-"""
+
+from src.suppliers.decision_tree_qualifier import (
+    DecisionTreeQualifier,
+)
+
+from src.suppliers.nash_equilibrium import (
+    NashEquilibriumEngine,
+)
+
+# src/pipelines/sku_pipeline.py
 
 from pathlib import Path
 import json
+import logging
 
+import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
 import pandas as pd
+import seaborn as sns
+
+from src.pdm.rul_engine import (
+    RULEngine,
+)
+
+from src.geo.risk_scorer import (
+    BayesianRiskScorer,
+)
+
+from src.risk.scenario_manager import (
+    ScenarioManager,
+)
+
+from src.risk.resilience_engine import (
+    ResilienceEngine,
+)
 
 from src.classifiers.abc_classifier import (
-    ABCClassifier,
+    classify_abc,
 )
 
 from src.classifiers.criticality_index import (
@@ -18,11 +44,11 @@ from src.classifiers.criticality_index import (
 )
 
 from src.classifiers.dominance_check import (
-    dominance_check,
+    DominanceChecker,
 )
 
 from src.classifiers.fns_classifier import (
-    FNSClassifier,
+    classify_fns,
 )
 
 from src.classifiers.location_scorer import (
@@ -34,59 +60,41 @@ from src.classifiers.ltr_scorer import (
 )
 
 from src.classifiers.ved_classifier import (
-    VEDClassifier,
+    classify_ved,
 )
 
 from src.data_ingestion.synthetic_sku_master import (
     generate_sku_master,
 )
 
-from src.data_ingestion.nasa_cmapss_loader import (
-    NASACMAPSSLoader,
-)
-
-from src.geo.risk_scorer import (
-    BayesianRiskScorer,
-)
-
 from src.optimization.bellman_engine import (
     BellmanEngine,
 )
 
-from src.optimization.push_pull_engine import (
-    PushPullEngine,
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=(
+        "%(asctime)s | "
+        "%(levelname)s | "
+        "%(name)s | "
+        "%(message)s"
+    ),
 )
 
-from src.pdm.rul_engine import (
-    RULEngine,
+logger = logging.getLogger(__name__)
+
+
+OUTPUT_PATH = Path(
+    "data/processed/sku_master_v1.3.parquet"
 )
 
-from src.risk.resilience_engine import (
-    ResilienceEngine,
+METRICS_PATH = Path(
+    "data/processed/pipeline_metrics.json"
 )
 
-from src.risk.scenario_manager import (
-    ScenarioManager,
-)
-
-from src.suppliers.decision_tree_qualifier import (
-    DecisionTreeQualifier,
-)
-
-from src.suppliers.nash_equilibrium import (
-    NashEquilibriumModel,
-)
-
-from src.suppliers.repeated_game import (
-    RepeatedGameModel,
-)
-
-from src.mlflow_setup.model_registry_v2 import (
-    register_all_v1_2_models,
-)
-
-from src.utils.mlflow_setup import (
-    setup_mlflow,
+FIGURES_DIR = Path(
+    "reports/figures"
 )
 
 
@@ -138,7 +146,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 1/13 â€” Generate SKU Master"
+            "Stage 1/13 — Generate SKU Master"
         )
 
         df = generate_sku_master(
@@ -155,7 +163,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 2/13 â€” Dominance Check"
+            "Stage 2/13 — Dominance Check"
         )
 
         df["annual_consumption_value"] = (
@@ -186,7 +194,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 3/13 â€” ABC Classification"
+            "Stage 3/13 — ABC Classification"
         )
 
         df = classify_abc(df)
@@ -196,7 +204,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 4/13 â€” VED Classification"
+            "Stage 4/13 — VED Classification"
         )
 
         df = classify_ved(df)
@@ -206,7 +214,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 5/13 â€” FNS Classification"
+            "Stage 5/13 — FNS Classification"
         )
 
         df = classify_fns(df)
@@ -216,7 +224,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 6/13 â€” Location Scoring"
+            "Stage 6/13 — Location Scoring"
         )
 
         scorer = LocationScorer()
@@ -228,7 +236,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 7/13 â€” Bayesian Geo-Risk"
+            "Stage 7/13 — Bayesian Geo-Risk"
         )
 
         risk_scorer = BayesianRiskScorer(
@@ -244,7 +252,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 8/13 â€” Scenario Injection"
+            "Stage 8/13 — Scenario Injection"
         )
 
         scenario_mgr = ScenarioManager()
@@ -266,7 +274,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 9/13 â€” Resilience Decay"
+            "Stage 9/13 — Resilience Decay"
         )
 
         resilience = ResilienceEngine()
@@ -288,7 +296,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 10/13 â€” Compound LTR"
+            "Stage 10/13 — Compound LTR"
         )
 
         ltr = LTRScorer()
@@ -307,7 +315,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 11/13 â€” Criticality Index"
+            "Stage 11/13 — Criticality Index"
         )
 
         ci = CriticalityIndexer()
@@ -332,7 +340,7 @@ def run_pipeline(
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 12/13 â€” RUL Engine"
+            "Stage 12/13 — RUL Engine"
         )
 
         rul_engine = RULEngine()
@@ -347,11 +355,11 @@ def run_pipeline(
         )
 
         # ---------------------------------------------------------
-        # Stage 13 â€” Bellman Optimisation
+        # Stage 13 — Bellman Optimisation
         # ---------------------------------------------------------
 
         logger.info(
-            "Stage 13/13 â€” Bellman Optimisation"
+            "Stage 13/13 — Bellman Optimisation"
         )
 
         bellman = BellmanEngine()
@@ -359,11 +367,11 @@ def run_pipeline(
         df = bellman.compute(df)
 
         # =========================================================
-        # STAGE 14 â€” SUPPLIER QUALIFICATION
+        # STAGE 14 — SUPPLIER QUALIFICATION
         # =========================================================
 
         logger.info(
-            "Stage 14/15 â€” Supplier Qualification"
+            "Stage 14/15 — Supplier Qualification"
         )
 
         supplier_engine = DecisionTreeQualifier(
@@ -391,11 +399,11 @@ def run_pipeline(
         )
 
         # =========================================================
-        # STAGE 15 â€” NASH EQUILIBRIUM
+        # STAGE 15 — NASH EQUILIBRIUM
         # =========================================================
 
         logger.info(
-            "Stage 15/15 â€” Nash Equilibrium"
+            "Stage 15/15 — Nash Equilibrium"
         )
 
         nash_engine = NashEquilibriumEngine()
@@ -602,162 +610,6 @@ def run_pipeline(
                 f,
                 indent=2,
             )
-
-
-        # =========================================================
-        # STAGE 16 - NASA CMAPSS
-        # =========================================================
-
-        logger.info(
-            "Stage 16/18 - NASA CMAPSS"
-        )
-
-        cmapss_loader = NASACMAPSSLoader(
-            rul_threshold=20.0,
-            use_synthetic=True,
-        )
-
-        rul_df = cmapss_loader.load(
-            n_units=100
-        )
-
-        df = (
-            cmapss_loader
-            .merge_rul_to_sku_master(
-                df,
-                rul_df,
-            )
-        )
-
-        logger.info(
-            "CMAPSS complete | mean_RUL=%.2f",
-            df["rul_signal"].mean(),
-        )
-
-        # =========================================================
-        # STAGE 17 - PUSH/PULL
-        # =========================================================
-
-        logger.info(
-            "Stage 17/18 - Push/Pull"
-        )
-
-        pp_engine = PushPullEngine(
-
-            push_density_threshold=0.50,
-
-            pull_rul_threshold=20.0,
-
-            push_weight=0.60,
-        )
-
-        df = pp_engine.compute(df)
-
-        mode_dist = (
-            df["decoupling_mode"]
-            .value_counts()
-        )
-
-        logger.info(
-            "Push/Pull complete | %s",
-            dict(mode_dist),
-        )
-
-        # =========================================================
-        # STAGE 18 - REPEATED GAME
-        # =========================================================
-
-        logger.info(
-            "Stage 18/18 - Repeated Game"
-        )
-
-        rg_model = RepeatedGameModel(
-
-            T=24,
-
-            discount_factor=0.92,
-
-            late_threshold_days=7.0,
-
-            cooperation_surplus=100.0,
-
-            defection_gain=20.0,
-
-            grim_trigger_threshold=1,
-        )
-
-        df, rep_matrix = rg_model.score(df)
-
-        rep_path = Path(
-            "data/processed/reputation_matrix.parquet"
-        )
-
-        rep_path.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        rep_matrix.to_parquet(
-            rep_path,
-            index=False,
-        )
-
-        logger.info(
-            "Repeated game complete | mean_rep=%.3f",
-            df["reputation_score"].mean(),
-        )
-
-        # =========================================================
-        # MODEL REGISTRY v2
-        # =========================================================
-
-        registry = register_all_v1_2_models(
-
-            dt_qualifier=dt_qualifier,
-
-            nash_model=nash_model,
-
-            repeated_game=rg_model,
-
-            bellman_engine=bellman,
-
-            df=df,
-        )
-
-        logger.info(
-            "Registry complete | models=%d",
-            len(
-                registry.get(
-                    "models",
-                    {}
-                )
-            ),
-        )
-
-        metrics.update({
-
-            "mean_rul":
-                round(
-                    df["rul_signal"].mean(),
-                    2,
-                ),
-
-            "mean_reputation":
-                round(
-                    df[
-                        "reputation_score"
-                    ].mean(),
-                    4,
-                ),
-
-            "triggers_fired":
-                int(
-                    df[
-                        "grim_trigger_fired"
-                    ].sum()
-                ),
-        })
-
 
         # ---------------------------------------------------------
         # Figures
