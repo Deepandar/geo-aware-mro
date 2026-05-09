@@ -333,10 +333,6 @@ def run_pipeline(
             float(
                 df["ci_score"].mean()
             ),
-
-            "mean_q_star": float(
-                df["q_star"].mean()
-            ),
         )
 
         # ---------------------------------------------------------
@@ -563,10 +559,6 @@ def run_pipeline(
                         "ci_score"
                     ].mean()
                 ),
-
-            "mean_q_star": float(
-                df["q_star"].mean()
-            ),
 
             "mean_qstar":
                 float(
