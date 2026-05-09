@@ -1,2 +1,21 @@
-use_environment_profiles: true
-environment_profile_version: v1.2
+
+location_scoring:
+
+  use_environment_profiles: true
+
+  use_climate_zone: true
+
+  use_sortie_rate: true
+
+  desert_high_tempo_multiplier: 1.40
+
+  temperate_standard_multiplier: 1.00
+
+  cold_weather_multiplier: 1.25
+
+  high_sortie_multiplier: 1.35
+
+  medium_sortie_multiplier: 1.10
+
+  low_sortie_multiplier: 0.90
+
