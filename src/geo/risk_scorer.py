@@ -43,7 +43,12 @@ class BayesianRiskScorer:
         with open(config_path) as f:
             cfg = yaml.safe_load(f)["criticality_index"]
 
-        self.use_geo_risk = cfg["ltr"]["use_geo_risk"]
+        ltr_cfg = cfg.get("ltr", {})
+
+        self.use_geo_risk = ltr_cfg.get(
+            "use_geo_risk",
+            True
+        )
 
         logger.info(
             "BayesianRiskScorer initialised | use_geo_risk=%s",

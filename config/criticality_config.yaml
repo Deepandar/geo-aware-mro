@@ -1,34 +1,38 @@
 
 criticality_index:
 
-  # -------------------------------------------------------
-  # EXISTING v1.1 PARAMETERS
-  # -------------------------------------------------------
-
-  use_geo_risk: true
-
-  geo_risk_weight: 0.35
-
-  ltr_weight: 0.25
-
-  ved_weight: 0.20
-
-  fns_weight: 0.10
-
-  scarcity_weight: 0.10
-
-  criticality_threshold: 0.75
-
-
-  # -------------------------------------------------------
-  # WEEK 14 / v1.2 FLAGS
-  # -------------------------------------------------------
-
   version: "v1.2"
 
-  use_environment_profiles: true
+  # -------------------------------------------------------
+  # LEAD TIME RISK (LTR)
+  # -------------------------------------------------------
 
-  use_push_pull_engine: true
+  ltr:
 
-  use_nasa_rul_signals: true
+    use_geo_risk: true
+
+    geo_risk_weight: 0.35
+
+    ltr_weight: 0.25
+
+    ved_weight: 0.20
+
+    fns_weight: 0.10
+
+    scarcity_weight: 0.10
+
+    criticality_threshold: 0.75
+
+
+  # -------------------------------------------------------
+  # v1.2 FEATURE FLAGS
+  # -------------------------------------------------------
+
+  features:
+
+    use_environment_profiles: true
+
+    use_push_pull_engine: true
+
+    use_nasa_rul_signals: true
 
