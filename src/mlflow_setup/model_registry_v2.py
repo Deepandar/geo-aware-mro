@@ -263,6 +263,22 @@ def register_all_v1_2_models(
         exist_ok=True,
     )
 
+    # -----------------------------------------------------
+    # SAFE REGISTRY INIT
+    # -----------------------------------------------------
+
+    if not REGISTRY_PATH.exists():
+
+        REGISTRY_PATH.write_text(
+            json.dumps(
+                {
+                    "version": "v1.2",
+                    "models": {},
+                },
+                indent=2,
+            )
+        )
+
     REGISTRY_PATH.write_text(
         json.dumps(
             manifest,
