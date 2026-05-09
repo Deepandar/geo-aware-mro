@@ -1,38 +1,106 @@
 name: geo-aware-mro-ci
 
 on:
+
   push:
     branches:
       - main
+      - feature/**
 
   pull_request:
     branches:
       - main
 
 jobs:
+
   test:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
     steps:
+
+      # ---------------------------------------------------
+      # CHECKOUT
+      # ---------------------------------------------------
 
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      # ---------------------------------------------------
+      # PYTHON
+      # ---------------------------------------------------
+
       - name: Setup Python
         uses: actions/setup-python@v5
+
         with:
-          python-version: '3.13'
+          python-version: ${{ matrix.python-version }}
+
+      # ---------------------------------------------------
+      # UPGRADE PIP
+      # ---------------------------------------------------
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+
+      # ---------------------------------------------------
+      # INSTALL DEPENDENCIES
+      # ---------------------------------------------------
 
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+
+          pip install -r requirements-lock.txt
+
+          pip install pytest pytest-cov
+
+      # ---------------------------------------------------
+      # DVC/PATHSPEC FIX
+      # ---------------------------------------------------
+
+      - name: Fix DVC compatibility
+        run: |
+          pip install "pathspec<0.12.0"
+
+      # ---------------------------------------------------
+      # RUNTIME DIRECTORIES
+      # ---------------------------------------------------
+
+      - name: Create Runtime Directories
+        run: |
+
+          mkdir -p data/processed
+
+          mkdir -p reports/figures
+
+          mkdir -p mlruns
+
+      # ---------------------------------------------------
+      # MLFLOW LOCAL TRACKING
+      # ---------------------------------------------------
+
+      - name: Configure MLflow
+        run: |
+          echo "MLFLOW_TRACKING_URI=file:./mlruns" >> $GITHUB_ENV
+
+      # ---------------------------------------------------
+      # TEST SUITE
+      # ---------------------------------------------------
 
       - name: Run Tests
         run: |
-          pytest tests/ -v --tb=short
+          pytest
+
+      # ---------------------------------------------------
+      # FULL PIPELINE
+      # ---------------------------------------------------
 
       - name: Run Pipeline
         run: |
           python -m src.pipelines.sku_pipeline
+
