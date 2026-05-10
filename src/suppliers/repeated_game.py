@@ -9,24 +9,10 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------
-# OPTIONAL MLFLOW IMPORT
-# ---------------------------------------------------------
 
-try:
-
-    import mlflow
-
-    MLFLOW_AVAILABLE = True
-
-except Exception:
-
-    MLFLOW_AVAILABLE = False
-
-
-# ---------------------------------------------------------
-# DELIVERY HISTORY
-# ---------------------------------------------------------
+# =========================================================
+# DATA STRUCTURES
+# =========================================================
 
 @dataclass
 class SupplierHistory:
@@ -40,6 +26,10 @@ class SupplierHistory:
     defection_prob: float
 
     late_threshold_days: float
+
+    geo_risk_score: float = 0.0
+
+    supplier_risk_class: str = "Medium"
 
     deliveries: list[float] = field(
         default_factory=list
@@ -55,35 +45,39 @@ class SupplierHistory:
     ) -> None:
 
         self.deliveries = []
-
         self.defections = []
 
         for _ in range(self.periods):
 
-            if rng.random() < self.defection_prob:
-
-                delay = rng.gamma(
-                    shape=2.0,
-                    scale=self.late_threshold_days,
+            late_days = max(
+                0.0,
+                rng.normal(
+                    loc=3.0,
+                    scale=4.0,
                 )
-
-            else:
-
-                delay = rng.exponential(
-                    scale=1.5
-                )
-
-            self.deliveries.append(delay)
-
-            self.defections.append(
-                delay >
-                self.late_threshold_days
             )
 
+            defected = (
+                rng.random()
+                <
+                self.defection_prob
+            )
 
-# ---------------------------------------------------------
-# RESULT OBJECT
-# ---------------------------------------------------------
+            if defected:
+
+                late_days += rng.uniform(
+                    5.0,
+                    15.0,
+                )
+
+            self.deliveries.append(
+                late_days
+            )
+
+            self.defections.append(
+                defected
+            )
+
 
 @dataclass
 class ReputationResult:
@@ -109,9 +103,9 @@ class ReputationResult:
     recommended_action: str
 
 
-# ---------------------------------------------------------
-# MAIN MODEL
-# ---------------------------------------------------------
+# =========================================================
+# REPEATED GAME MODEL
+# =========================================================
 
 class RepeatedGameModel:
 
@@ -120,10 +114,11 @@ class RepeatedGameModel:
         T: int = 24,
         discount_factor: float = 0.92,
         late_threshold_days: float = 7.0,
-        reputation_decay: float = 0.85,
         cooperation_surplus: float = 100.0,
         defection_gain: float = 20.0,
-        grim_trigger_threshold: int = 1,
+        grim_trigger_threshold: int = 3,
+        reputation_decay: float = 0.90,
+        seed: int = 42,
     ):
 
         self.T = T
@@ -134,10 +129,6 @@ class RepeatedGameModel:
 
         self.late_threshold_days = (
             late_threshold_days
-        )
-
-        self.reputation_decay = (
-            reputation_decay
         )
 
         self.cooperation_surplus = (
@@ -152,40 +143,79 @@ class RepeatedGameModel:
             grim_trigger_threshold
         )
 
+        self.reputation_decay = (
+            reputation_decay
+        )
+
+        self.seed = seed
+
+        self.rng = np.random.default_rng(
+            seed
+        )
+
         self.delta_required = (
-            self.defection_gain /
+            self.defection_gain
+            /
             (
-                self.defection_gain +
+                self.defection_gain
+                +
                 self.cooperation_surplus
             )
         )
 
-        logger.info(
-            "RepeatedGameModel initialised | "
-            "δ=%.3f | δ_required=%.3f",
-            self.discount_factor,
-            self.delta_required,
+    # =====================================================
+    # HISTORY GENERATION
+    # =====================================================
+
+    def _build_history(
+        self,
+        row: pd.Series,
+    ) -> SupplierHistory:
+
+        risk_class = str(
+            row.get(
+                "supplier_risk_class",
+                "Medium"
+            )
         )
 
-    # -----------------------------------------------------
-    # VALIDATION
-    # -----------------------------------------------------
+        risk_map = {
+            "Low": 0.05,
+            "Medium": 0.12,
+            "High": 0.22,
+            "Critical": 0.35,
+        }
 
-    def _validate(
-        self,
-        df: pd.DataFrame,
-    ):
+        defect_prob = risk_map.get(
+            risk_class,
+            0.12,
+        )
 
-        if "item_id" not in df.columns:
+        return SupplierHistory(
+            item_id=str(
+                row.get(
+                    "item_id",
+                    "UNKNOWN"
+                )
+            ),
+            periods=self.T,
+            on_time_rate=float(
+                1.0 - defect_prob
+            ),
+            defection_prob=defect_prob,
+            late_threshold_days=self.late_threshold_days,
+            geo_risk_score=float(
+                row.get(
+                    "geo_risk_score",
+                    0.0
+                )
+            ),
+            supplier_risk_class=risk_class,
+        )
 
-            raise ValueError(
-                "RepeatedGameModel: "
-                "'item_id' required"
-            )
-
-    # -----------------------------------------------------
-    # REPUTATION UPDATE
-    # -----------------------------------------------------
+    # =====================================================
+    # REPUTATION ENGINE
+    # =====================================================
 
     def _compute_reputation(
         self,
@@ -205,13 +235,23 @@ class RepeatedGameModel:
                 n_defections += 1
 
                 rep = (
-                    self.reputation_decay *
+                    self.reputation_decay
+                    *
                     rep
+                )
+
+                adaptive_threshold = (
+                    self.grim_trigger_threshold
+                    +
+                    int(
+                        history.geo_risk_score
+                        * 3
+                    )
                 )
 
                 if (
                     n_defections >=
-                    self.grim_trigger_threshold
+                    adaptive_threshold
                 ):
 
                     trigger = True
@@ -219,47 +259,88 @@ class RepeatedGameModel:
             else:
 
                 rep = (
-                    self.reputation_decay *
+                    self.reputation_decay
+                    *
                     rep
                     +
                     (
-                        1 -
+                        1
+                        -
                         self.reputation_decay
                     )
                 )
 
+        # -------------------------------------------------
+        # CONTEXT-AWARE TRIGGER PENALTY
+        # -------------------------------------------------
+
         if trigger:
 
-            rep = min(rep, 0.20)
+            punishment_floor = (
+                0.30
+                +
+                (
+                    0.15
+                    *
+                    history.geo_risk_score
+                )
+            )
+
+            rep = min(
+                rep,
+                punishment_floor
+            )
 
         rep = float(
             np.clip(rep, 0.0, 1.0)
         )
 
         delta_ok = (
-            self.discount_factor >
+            self.discount_factor
+            >
             self.delta_required
         )
 
         # -------------------------------------------------
-        # ACTION POLICY
+        # ENTERPRISE ESCALATION LADDER
         # -------------------------------------------------
 
-        if trigger:
+        supplier_risk = (
+            history.supplier_risk_class
+        )
+
+        if (
+            trigger
+            and
+            (
+                rep <= 0.10
+                or
+                (
+                    rep <= 0.25
+                    and supplier_risk in (
+                        "High",
+                        "Critical",
+                    )
+                )
+            )
+        ):
 
             action = "Mandatory Switch"
 
-        elif rep < 0.40:
+        elif (
+            supplier_risk == "Critical"
+            or rep <= 0.40
+        ):
+
+            action = "Renegotiate"
+
+        elif rep <= 0.60:
 
             action = "Warning"
 
-        elif rep < 0.65:
+        elif rep <= 0.80:
 
             action = "Monitor"
-
-        elif not delta_ok:
-
-            action = "Renegotiate"
 
         else:
 
@@ -269,102 +350,54 @@ class RepeatedGameModel:
 
             item_id=history.item_id,
 
-            reputation_score=round(rep, 4),
+            reputation_score=round(
+                rep,
+                4,
+            ),
 
             grim_trigger_fired=trigger,
 
             n_defections=n_defections,
 
-            n_periods=len(history.defections),
+            n_periods=len(
+                history.defections
+            ),
 
             delta_satisfied=delta_ok,
 
             delta_value=self.delta_required,
 
-            cooperation_surplus=
-            self.cooperation_surplus,
+            cooperation_surplus=(
+                self.cooperation_surplus
+            ),
 
-            defection_gain=
-            self.defection_gain,
+            defection_gain=(
+                self.defection_gain
+            ),
 
             recommended_action=action,
         )
 
-    # -----------------------------------------------------
-    # MAIN SCORE
-    # -----------------------------------------------------
+    # =====================================================
+    # PUBLIC API
+    # =====================================================
 
     def score(
         self,
         df: pd.DataFrame,
-        seed: int = 42,
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
-
-        self._validate(df)
-
-        out = df.copy()
-
-        rng = np.random.default_rng(seed)
+    ):
 
         results = []
 
-        for _, row in out.iterrows():
+        for _, row in df.iterrows():
 
-            geo = float(
-                row.get(
-                    "geo_risk_score",
-                    0.30,
-                )
+            history = self._build_history(
+                row
             )
 
-            risk = str(
-                row.get(
-                    "supplier_risk_class",
-                    "Medium",
-                )
+            history.simulate(
+                self.rng
             )
-
-            defect_base = {
-
-                "Low": 0.05,
-
-                "Medium": 0.15,
-
-                "High": 0.30,
-
-                "Critical": 0.50,
-
-            }.get(risk, 0.15)
-
-            defect_prob = float(
-                np.clip(
-                    0.6 * defect_base
-                    +
-                    0.4 * geo * 0.5,
-                    0.01,
-                    0.80,
-                )
-            )
-
-            history = SupplierHistory(
-
-                item_id=str(
-                    row["item_id"]
-                ),
-
-                periods=self.T,
-
-                on_time_rate=
-                1.0 - defect_prob,
-
-                defection_prob=
-                defect_prob,
-
-                late_threshold_days=
-                self.late_threshold_days,
-            )
-
-            history.simulate(rng)
 
             result = (
                 self._compute_reputation(
@@ -372,154 +405,53 @@ class RepeatedGameModel:
                 )
             )
 
-            results.append(result)
+            results.append({
+                "item_id":
+                    result.item_id,
 
-        # -------------------------------------------------
-        # OUTPUT COLUMNS
-        # -------------------------------------------------
+                "reputation_score":
+                    result.reputation_score,
 
-        out["reputation_score"] = [
-            r.reputation_score
-            for r in results
-        ]
+                "grim_trigger_fired":
+                    result.grim_trigger_fired,
 
-        out["grim_trigger_fired"] = [
-            r.grim_trigger_fired
-            for r in results
-        ]
+                "n_defections":
+                    result.n_defections,
 
-        out["n_defections"] = [
-            r.n_defections
-            for r in results
-        ]
+                "delta_satisfied":
+                    result.delta_satisfied,
 
-        out["delta_satisfied"] = [
-            r.delta_satisfied
-            for r in results
-        ]
+                "recommended_action":
+                    result.recommended_action,
 
-        out["recommended_action"] = [
-            r.recommended_action
-            for r in results
-        ]
+                "supplier_risk_class":
+                    row.get(
+                        "supplier_risk_class",
+                        "Medium"
+                    ),
+            })
 
-        rep_matrix = pd.DataFrame([{
-
-            "item_id":
-            r.item_id,
-
-            "reputation_score":
-            r.reputation_score,
-
-            "grim_trigger_fired":
-            r.grim_trigger_fired,
-
-            "n_defections":
-            r.n_defections,
-
-            "n_periods":
-            r.n_periods,
-
-            "delta_satisfied":
-            r.delta_satisfied,
-
-            "delta_required":
-            r.delta_value,
-
-            "recommended_action":
-            r.recommended_action,
-
-        } for r in results])
-
-        logger.info(
-            "Repeated game complete | "
-            "mean_rep=%.3f | "
-            "grim_trigger=%d",
-            out[
-                "reputation_score"
-            ].mean(),
-            int(
-                out[
-                    "grim_trigger_fired"
-                ].sum()
-            ),
+        out = pd.DataFrame(
+            results
         )
 
-        return out, rep_matrix
-
-    # -----------------------------------------------------
-    # FOLK THEOREM
-    # -----------------------------------------------------
+        return out, out.copy()
 
     def folk_theorem_summary(
         self,
-    ) -> dict:
-
-        ok = (
-            self.discount_factor >
-            self.delta_required
-        )
+    ):
 
         return {
-
             "discount_factor":
-            self.discount_factor,
-
-            "defection_gain":
-            self.defection_gain,
-
-            "cooperation_surplus":
-            self.cooperation_surplus,
+                self.discount_factor,
 
             "delta_required":
-            round(
                 self.delta_required,
-                4,
-            ),
 
             "folk_theorem_satisfied":
-            ok,
-        }
-
-    # -----------------------------------------------------
-    # OPTIONAL MLFLOW
-    # -----------------------------------------------------
-
-    def log_to_mlflow(
-        self,
-        df: pd.DataFrame,
-        run_name: str =
-        "repeated_game_v1.2",
-    ) -> None:
-
-        if not MLFLOW_AVAILABLE:
-
-            logger.warning(
-                "MLflow unavailable"
-            )
-
-            return
-
-        with mlflow.start_run(
-            run_name=run_name,
-            nested=True,
-        ):
-
-            mlflow.log_param(
-                "T",
-                self.T,
-            )
-
-            mlflow.log_param(
-                "discount_factor",
-                self.discount_factor,
-            )
-
-            mlflow.log_metric(
-                "mean_reputation",
-                float(
-                    df[
-                        "reputation_score"
-                    ].mean()
+                (
+                    self.discount_factor
+                    >
+                    self.delta_required
                 ),
-            )
+        }
