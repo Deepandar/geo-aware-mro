@@ -1,3 +1,21 @@
+"""
+Monte Carlo Orchestrator — Week 20
+==================================
+Runs stochastic Black Swan trials across all disruption scenarios.
+
+Pipeline:
+    Scenario Injection
+        ↓
+    DES Simulation
+        ↓
+    KPI Aggregation
+        ↓
+    Monte Carlo Output DataFrame
+
+Author : Deepender
+Version: 1.2.0
+"""
+
 from __future__ import annotations
 
 import logging
@@ -11,6 +29,7 @@ from src.simulation.scenario_injector import ScenarioInjector
 
 logger = logging.getLogger(__name__)
 
+
 SCENARIOS = [
     "baseline",
     "sanctions",
@@ -22,54 +41,27 @@ SCENARIOS = [
 
 
 @dataclass
-class TrialResult:
-    trial_id: int
-    scenario: str
-
-    mean_fill_rate: float
-
-    fill_rate_high: float
-    fill_rate_medium: float
-    fill_rate_low: float
-
-    total_stockout_cost: float
-
-    tsl_compliance_rate: float
-
-    cvs_fill_rate: float
-    cds_fill_rate: float
-    cvs_fix_holds: bool
-
-    cost_high_tier: float
-    cost_medium_tier: float
-    cost_low_tier: float
-
-
 class MonteCarloPipeline:
+    """
+    Monte Carlo orchestration engine.
+    """
 
-    def __init__(
-        self,
-        n_trials: int = 100,
-        sim_periods: int = 26,
-        fast_mode: bool = False,
-        seed: int = 42,
-    ):
-        self.n_trials = n_trials
-        self.sim_periods = sim_periods
-        self.fast_mode = fast_mode
+    n_trials: int = 10
+    sim_periods: int = 52
+    scenario_config_path: str = "config/scenario_library.yaml"
+    random_seed: int = 42
 
-        self.rng = np.random.default_rng(seed)
+    def __post_init__(self):
+
+        self.rng = np.random.default_rng(self.random_seed)
 
         self.injector = ScenarioInjector(
-            "config/scenario_library.yaml"
+            self.scenario_config_path
         )
 
-        logger.info(
-            "MonteCarloPipeline initialized | "
-            "trials=%d periods=%d",
-            n_trials,
-            sim_periods,
-        )
+    # =====================================================
+    # SINGLE TRIAL
+    # =====================================================
 
     def _run_single_trial(
         self,
@@ -78,6 +70,10 @@ class MonteCarloPipeline:
         trial_id: int,
     ) -> dict:
 
+        # ---------------------------------------------
+        # Apply Black Swan scenario
+        # ---------------------------------------------
+
         impact = self.injector.inject(
             sku_df,
             scenario,
@@ -85,98 +81,156 @@ class MonteCarloPipeline:
 
         sim_df = impact.modified_df.copy()
 
+        # ---------------------------------------------
+        # Create DES simulator
+        # ---------------------------------------------
+
         sim = DepotSimulator(
+            seed=int(
+                self.rng.integers(
+                    0,
+                    1_000_000,
+                )
+            ),
+        )
+
+        # ---------------------------------------------
+        # Run simulation
+        # ---------------------------------------------
+
+        sim_results = sim.run(
+            df=sim_df,
             periods=self.sim_periods,
-            seed=int(self.rng.integers(0, 1_000_000)),
         )
 
-        sim_result = sim.run(sim_df)
+        # ---------------------------------------------
+        # KPI aggregation
+        # ---------------------------------------------
 
-        overall_fill = float(
-            sim_result["fill_rate"].mean()
+        mean_fill_rate = float(
+            sim_results["fill_rate"].mean()
         )
 
-        high_df = sim_result[
-            sim_result["ci_tier"] == "High"
+        total_stockout_cost = float(
+            sim_results["stockout_cost"].sum()
+        )
+
+        # ---------------------------------------------
+        # Tier segmentation
+        # ---------------------------------------------
+
+        high_df = sim_results[
+            sim_results["ci_tier"] == "High"
         ]
 
-        med_df = sim_result[
-            sim_result["ci_tier"] == "Medium"
+        med_df = sim_results[
+            sim_results["ci_tier"] == "Medium"
         ]
 
-        low_df = sim_result[
-            sim_result["ci_tier"] == "Low"
+        low_df = sim_results[
+            sim_results["ci_tier"] == "Low"
         ]
 
-        fill_high = (
+        fill_rate_high = (
             float(high_df["fill_rate"].mean())
-            if len(high_df)
-            else overall_fill
+            if len(high_df) > 0
+            else 1.0
         )
 
-        fill_med = (
+        fill_rate_medium = (
             float(med_df["fill_rate"].mean())
-            if len(med_df)
-            else overall_fill
+            if len(med_df) > 0
+            else 1.0
         )
 
-        fill_low = (
+        fill_rate_low = (
             float(low_df["fill_rate"].mean())
-            if len(low_df)
-            else overall_fill
+            if len(low_df) > 0
+            else 1.0
         )
 
-        stockout_cost = float(
-            sim_result["total_stockout_cost"].sum()
-        )
+        # ---------------------------------------------
+        # TSL compliance
+        # ---------------------------------------------
 
-        tsl_compliance = float(
+        tsl_compliance_rate = float(
             (
-                sim_result["fill_rate"]
-                >= sim_result["tsl"]
+                sim_results["fill_rate"] >= 0.95
             ).mean()
         )
 
-        cvs_fill = fill_high
-        cds_fill = fill_low
+        # ---------------------------------------------
+        # Vehicle metrics
+        # ---------------------------------------------
 
-        cvs_fix = bool(
-            cvs_fill >= cds_fill
+        cvs_fill_rate = (
+            float(
+                sim_results.loc[
+                    sim_results["platform"] == "CVS",
+                    "fill_rate",
+                ].mean()
+            )
+            if "platform" in sim_results.columns
+            else mean_fill_rate
         )
 
-        return TrialResult(
-            trial_id=trial_id,
-            scenario=scenario,
+        cds_fill_rate = (
+            float(
+                sim_results.loc[
+                    sim_results["platform"] == "CDS",
+                    "fill_rate",
+                ].mean()
+            )
+            if "platform" in sim_results.columns
+            else mean_fill_rate
+        )
 
-            mean_fill_rate=overall_fill,
+        cvs_fix_holds = bool(
+            mean_fill_rate >= 0.90
+        )
 
-            fill_rate_high=fill_high,
-            fill_rate_medium=fill_med,
-            fill_rate_low=fill_low,
+        # ---------------------------------------------
+        # Output row
+        # ---------------------------------------------
 
-            total_stockout_cost=stockout_cost,
+        return {
+            "trial_id": trial_id,
+            "scenario": scenario,
 
-            tsl_compliance_rate=tsl_compliance,
+            "mean_fill_rate": mean_fill_rate,
 
-            cvs_fill_rate=cvs_fill,
-            cds_fill_rate=cds_fill,
-            cvs_fix_holds=cvs_fix,
+            "fill_rate_high": fill_rate_high,
+            "fill_rate_medium": fill_rate_medium,
+            "fill_rate_low": fill_rate_low,
 
-            cost_high_tier=float(
-                high_df["total_stockout_cost"].sum()
-                if len(high_df) else 0.0
-            ),
+            "total_stockout_cost":
+                total_stockout_cost,
 
-            cost_medium_tier=float(
-                med_df["total_stockout_cost"].sum()
-                if len(med_df) else 0.0
-            ),
+            "tsl_compliance_rate":
+                tsl_compliance_rate,
 
-            cost_low_tier=float(
-                low_df["total_stockout_cost"].sum()
-                if len(low_df) else 0.0
-            ),
-        ).__dict__
+            "cvs_fill_rate":
+                cvs_fill_rate,
+
+            "cds_fill_rate":
+                cds_fill_rate,
+
+            "cvs_fix_holds":
+                cvs_fix_holds,
+
+            "n_skus":
+                len(sim_results),
+
+            "scenario_lt_multiplier":
+                impact.mean_lt_multiplier,
+
+            "pct_skus_affected":
+                impact.pct_skus_affected,
+        }
+
+    # =====================================================
+    # SINGLE SCENARIO
+    # =====================================================
 
     def run_scenario(
         self,
@@ -188,31 +242,26 @@ class MonteCarloPipeline:
 
         for trial in range(self.n_trials):
 
-            rows.append(
-                self._run_single_trial(
-                    sku_df=sku_df,
-                    scenario=scenario,
-                    trial_id=trial,
-                )
+            row = self._run_single_trial(
+                sku_df=sku_df,
+                scenario=scenario,
+                trial_id=trial,
             )
 
-        out = pd.DataFrame(rows)
+            rows.append(row)
 
-        logger.info(
-            "Scenario complete | %s | rows=%d",
-            scenario,
-            len(out),
-        )
+        return pd.DataFrame(rows)
 
-        return out
+    # =====================================================
+    # ALL SCENARIOS
+    # =====================================================
 
     def run_all(
         self,
         sku_df: pd.DataFrame,
-        mlflow_parent_run: bool = False,
     ) -> pd.DataFrame:
 
-        all_results = []
+        results = []
 
         for scenario in SCENARIOS:
 
@@ -223,26 +272,54 @@ class MonteCarloPipeline:
                     scenario,
                 )
 
-                all_results.append(sc_df)
+                results.append(sc_df)
 
-            except Exception as e:
-
-                logger.exception(
-                    "Scenario failed: %s",
+                logger.info(
+                    "Completed scenario: %s",
                     scenario,
                 )
 
-                if not self.fast_mode:
-                    raise e
+            except Exception as exc:
+
+                logger.exception(
+                    "Scenario failed: %s | %s",
+                    scenario,
+                    str(exc),
+                )
+
+        # ---------------------------------------------
+        # Defensive protection
+        # ---------------------------------------------
+
+        if not results:
+
+            raise RuntimeError(
+                "Monte Carlo pipeline produced no scenario outputs."
+            )
 
         combined = pd.concat(
-            all_results,
+            results,
             ignore_index=True,
         )
 
-        logger.info(
-            "Monte Carlo complete | rows=%d",
-            len(combined),
-        )
-
         return combined
+
+
+# =========================================================
+# CONVENIENCE FUNCTION
+# =========================================================
+
+def run_monte_carlo(
+    sku_df: pd.DataFrame,
+    n_trials: int = 10,
+    sim_periods: int = 52,
+) -> pd.DataFrame:
+
+    mc = MonteCarloPipeline(
+        n_trials=n_trials,
+        sim_periods=sim_periods,
+    )
+
+    return mc.run_all(sku_df)
+
+
