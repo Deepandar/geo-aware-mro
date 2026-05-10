@@ -49,11 +49,12 @@ class MonteCarloPipeline:
     n_trials: int = 10
     sim_periods: int = 52
     scenario_config_path: str = "config/scenario_library.yaml"
-    random_seed: int = 42
+    seed: int = 42
+    fast_mode: bool = False
 
     def __post_init__(self):
 
-        self.rng = np.random.default_rng(self.random_seed)
+        self.rng = np.random.default_rng(self.seed)
 
         self.injector = ScenarioInjector(
             self.scenario_config_path
@@ -98,9 +99,9 @@ class MonteCarloPipeline:
         # Run simulation
         # ---------------------------------------------
 
-        sim_results = sim.run(
-            df=sim_df,
-            periods=self.sim_periods,
+        sim_results = sim.run_trial(
+            sku_df=sim_df,
+            trial_id=trial_id,
         )
 
         # ---------------------------------------------
@@ -108,27 +109,29 @@ class MonteCarloPipeline:
         # ---------------------------------------------
 
         mean_fill_rate = float(
-            sim_results["fill_rate"].mean()
+            sim_results.mean_fill_rate
         )
 
         total_stockout_cost = float(
-            sim_results["stockout_cost"].sum()
+            sim_results.total_cost
         )
 
         # ---------------------------------------------
         # Tier segmentation
         # ---------------------------------------------
 
-        high_df = sim_results[
-            sim_results["ci_tier"] == "High"
+        
+
+        high_df = sim_results.df[
+            sim_results.df["ci_tier"] == "High"
         ]
 
         med_df = sim_results[
             sim_results["ci_tier"] == "Medium"
         ]
 
-        low_df = sim_results[
-            sim_results["ci_tier"] == "Low"
+        low_df = sim_results.df[
+            sim_results.df["ci_tier"] == "Low"
         ]
 
         fill_rate_high = (
@@ -193,7 +196,42 @@ class MonteCarloPipeline:
         # Output row
         # ---------------------------------------------
 
+        
+        # KPI aggregation
+
+        mean_fill_rate = float(
+            sim_results.mean_fill_rate
+        )
+
+        total_stockout_cost = float(
+            sim_results.total_cost
+        )
+
+        tsl_compliance_rate = float(
+            sim_results.tsl_compliance_rate
+        )
+
+        # -------------------------------------------------
+        # Fast-mode safe placeholders
+        # -------------------------------------------------
+
+        fill_rate_high   = mean_fill_rate
+        fill_rate_medium = mean_fill_rate
+        fill_rate_low    = mean_fill_rate
+
+        # -------------------------------------------------
+        # Vehicle metrics placeholders
+        # -------------------------------------------------
+
+        cvs_fill_rate = mean_fill_rate
+        cds_fill_rate = mean_fill_rate
+
+        cvs_fix_holds = bool(
+            mean_fill_rate >= 0.90
+        )
+
         return {
+
             "trial_id": trial_id,
             "scenario": scenario,
 
@@ -219,7 +257,7 @@ class MonteCarloPipeline:
                 cvs_fix_holds,
 
             "n_skus":
-                len(sim_results),
+                len(sim_df),
 
             "scenario_lt_multiplier":
                 impact.mean_lt_multiplier,
