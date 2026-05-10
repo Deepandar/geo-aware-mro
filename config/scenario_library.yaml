@@ -1,103 +1,242 @@
-# -------------------------------------------------------------------
-# GEO-AWARE MRO — Black Swan Scenario Library (v1.2)
-# -------------------------------------------------------------------
-# Purpose:
-#   Defines stochastic disruption scenarios used by:
-#     - Bayesian geo-risk scoring
-#     - stochastic lead-time modelling
-#     - SimPy DES stress testing
-#     - Monte Carlo scenario analysis
-#
-# Version: v1.2
-# -------------------------------------------------------------------
+# Black Swan disruption scenario library — v1.2
 
 scenario_library:
 
   sanctions:
-    description: "Targeted export sanctions on high-tech components"
+
+    description: >
+      Targeted export sanctions on high-tech components
 
     affected_origins:
       - RU
-      - CN
+      - BY
+      - IR
+      - KP
+
+    affected_clusters:
+      - HIGH_RISK
+      - CONFLICT
 
     lead_time_shift:
-      distribution: gamma
-      mu_multiplier: 4.0
-      sigma_multiplier: 6.0
+
+      HIGH_RISK:
+        mu_mult: 4.0
+        sigma_mult: 6.0
+
+      CONFLICT:
+        mu_mult: 5.0
+        sigma_mult: 8.0
+
+      MEDIUM_RISK:
+        mu_mult: 1.5
+        sigma_mult: 2.0
 
     activation_probability: 0.15
+
     geo_risk_delta: 0.65
-    duration_days: 180
-    stockout_cost_multiplier: 1.5
+
+    duration_periods: 26
+
+    stockout_cost_multiplier: 1.50
+
+    vi_class_impact: Critical
+
+    affected_skus_pct: 0.20
+
 
   conflict:
-    description: "Active kinetic conflict disrupting supply routes"
+
+    description: >
+      Active kinetic conflict disrupting manufacturing
 
     affected_origins:
       - RU
       - UA
       - BY
+      - SY
+
+    affected_clusters:
+      - HIGH_RISK
+      - CONFLICT
 
     lead_time_shift:
-      distribution: gamma
-      mu_multiplier: 5.0
-      sigma_multiplier: 8.0
+
+      HIGH_RISK:
+        mu_mult: 5.0
+        sigma_mult: 8.0
+
+      CONFLICT:
+        mu_mult: 8.0
+        sigma_mult: 12.0
+
+      MEDIUM_RISK:
+        mu_mult: 2.0
+        sigma_mult: 3.0
 
     activation_probability: 0.08
+
     geo_risk_delta: 0.90
-    duration_days: 365
-    stockout_cost_multiplier: 2.0
+
+    duration_periods: 52
+
+    stockout_cost_multiplier: 2.00
+
+    vi_class_impact: Critical
+
+    affected_skus_pct: 0.15
+
 
   pandemic:
-    description: "Global supply chain disruption"
+
+    description: >
+      Global pandemic disrupting all supply chains
 
     affected_origins:
-      - CN
-      - IN
-      - TW
-      - KR
+      - ALL
+
+    affected_clusters:
+      - ALL
 
     lead_time_shift:
-      distribution: lognormal
-      mu_multiplier: 2.5
-      sigma_multiplier: 3.0
+
+      LOW_RISK:
+        mu_mult: 2.0
+        sigma_mult: 3.0
+
+      MEDIUM_RISK:
+        mu_mult: 2.5
+        sigma_mult: 4.0
+
+      HIGH_RISK:
+        mu_mult: 3.0
+        sigma_mult: 5.0
+
+      CONFLICT:
+        mu_mult: 3.5
+        sigma_mult: 6.0
+
+      UNKNOWN:
+        mu_mult: 2.0
+        sigma_mult: 3.0
 
     activation_probability: 0.05
+
     geo_risk_delta: 0.55
-    duration_days: 270
-    stockout_cost_multiplier: 1.8
+
+    duration_periods: 39
+
+    stockout_cost_multiplier: 1.80
+
+    vi_class_impact: High
+
+    affected_skus_pct: 0.80
+
 
   port_closure:
-    description: "Critical maritime chokepoint closure"
+
+    description: >
+      Strait or major port closure
 
     affected_origins:
       - AE
       - SA
       - KW
       - IR
+      - EG
+
+    affected_clusters:
+      - MEDIUM_RISK
+      - HIGH_RISK
 
     lead_time_shift:
-      distribution: gamma
-      mu_multiplier: 3.0
-      sigma_multiplier: 4.0
+
+      MEDIUM_RISK:
+        mu_mult: 3.0
+        sigma_mult: 4.5
+
+      HIGH_RISK:
+        mu_mult: 3.5
+        sigma_mult: 5.0
 
     activation_probability: 0.10
+
     geo_risk_delta: 0.45
-    duration_days: 90
-    stockout_cost_multiplier: 1.3
+
+    duration_periods: 13
+
+    stockout_cost_multiplier: 1.30
+
+    vi_class_impact: High
+
+    affected_skus_pct: 0.30
+
 
   logistics_collapse:
-    description: "Systemic freight network collapse"
+
+    description: >
+      Freight market collapse and systemic carrier disruption
 
     affected_origins:
       - ALL
 
+    affected_clusters:
+      - ALL
+
     lead_time_shift:
-      distribution: gamma
-      mu_multiplier: 2.0
-      sigma_multiplier: 2.5
+
+      LOW_RISK:
+        mu_mult: 2.0
+        sigma_mult: 2.5
+
+      MEDIUM_RISK:
+        mu_mult: 2.0
+        sigma_mult: 2.5
+
+      HIGH_RISK:
+        mu_mult: 2.5
+        sigma_mult: 3.0
+
+      CONFLICT:
+        mu_mult: 3.0
+        sigma_mult: 4.0
+
+      UNKNOWN:
+        mu_mult: 2.0
+        sigma_mult: 2.5
 
     activation_probability: 0.07
+
     geo_risk_delta: 0.35
-    duration_days: 120
-    stockout_cost_multiplier: 1.4
+
+    duration_periods: 17
+
+    stockout_cost_multiplier: 1.40
+
+    vi_class_impact: Medium
+
+    affected_skus_pct: 0.60
+
+
+  baseline:
+
+    description: >
+      Baseline nominal operations
+
+    affected_origins: []
+
+    affected_clusters: []
+
+    lead_time_shift: {}
+
+    activation_probability: 1.0
+
+    geo_risk_delta: 0.0
+
+    duration_periods: 52
+
+    stockout_cost_multiplier: 1.0
+
+    vi_class_impact: None
+
+    affected_skus_pct: 0.0
+

@@ -1,19 +1,7 @@
 """
 Monte Carlo Orchestrator — Week 20
 ==================================
-Runs stochastic Black Swan trials across all disruption scenarios.
-
-Pipeline:
-    Scenario Injection
-        ↓
-    DES Simulation
-        ↓
-    KPI Aggregation
-        ↓
-    Monte Carlo Output DataFrame
-
-Author : Deepender
-Version: 1.2.0
+Runs stochastic Black Swan trials across all scenarios.
 """
 
 from __future__ import annotations
@@ -24,11 +12,15 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from src.simulation.depot_sim import DepotSimulator
-from src.simulation.scenario_injector import ScenarioInjector
+from src.simulation.depot_sim import (
+    DepotSimulator,
+)
+
+from src.simulation.scenario_injector import (
+    ScenarioInjector,
+)
 
 logger = logging.getLogger(__name__)
-
 
 SCENARIOS = [
     "baseline",
@@ -42,19 +34,24 @@ SCENARIOS = [
 
 @dataclass
 class MonteCarloPipeline:
-    """
-    Monte Carlo orchestration engine.
-    """
 
     n_trials: int = 10
+
     sim_periods: int = 52
-    scenario_config_path: str = "config/scenario_library.yaml"
+
+    scenario_config_path: str = (
+        "config/scenario_library.yaml"
+    )
+
     seed: int = 42
-    fast_mode: bool = False
+
+    fast_mode: bool = True
 
     def __post_init__(self):
 
-        self.rng = np.random.default_rng(self.seed)
+        self.rng = np.random.default_rng(
+            self.seed
+        )
 
         self.injector = ScenarioInjector(
             self.scenario_config_path
@@ -72,7 +69,7 @@ class MonteCarloPipeline:
     ) -> dict:
 
         # ---------------------------------------------
-        # Apply Black Swan scenario
+        # Apply scenario disruption
         # ---------------------------------------------
 
         impact = self.injector.inject(
@@ -83,20 +80,23 @@ class MonteCarloPipeline:
         sim_df = impact.modified_df.copy()
 
         # ---------------------------------------------
-        # Create DES simulator
+        # Build simulator
         # ---------------------------------------------
 
         sim = DepotSimulator(
+            sim_periods=self.sim_periods,
+            n_trials=1,
             seed=int(
                 self.rng.integers(
                     0,
                     1_000_000,
                 )
             ),
+            fast_mode=self.fast_mode,
         )
 
         # ---------------------------------------------
-        # Run simulation
+        # Execute trial
         # ---------------------------------------------
 
         sim_results = sim.run_trial(
@@ -105,99 +105,8 @@ class MonteCarloPipeline:
         )
 
         # ---------------------------------------------
-        # KPI aggregation
+        # Aggregate KPIs
         # ---------------------------------------------
-
-        mean_fill_rate = float(
-            sim_results.mean_fill_rate
-        )
-
-        total_stockout_cost = float(
-            sim_results.total_cost
-        )
-
-        # ---------------------------------------------
-        # Tier segmentation
-        # ---------------------------------------------
-
-        
-
-        high_df = sim_results.df[
-            sim_results.df["ci_tier"] == "High"
-        ]
-
-        med_df = sim_results[
-            sim_results["ci_tier"] == "Medium"
-        ]
-
-        low_df = sim_results.df[
-            sim_results.df["ci_tier"] == "Low"
-        ]
-
-        fill_rate_high = (
-            float(high_df["fill_rate"].mean())
-            if len(high_df) > 0
-            else 1.0
-        )
-
-        fill_rate_medium = (
-            float(med_df["fill_rate"].mean())
-            if len(med_df) > 0
-            else 1.0
-        )
-
-        fill_rate_low = (
-            float(low_df["fill_rate"].mean())
-            if len(low_df) > 0
-            else 1.0
-        )
-
-        # ---------------------------------------------
-        # TSL compliance
-        # ---------------------------------------------
-
-        tsl_compliance_rate = float(
-            (
-                sim_results["fill_rate"] >= 0.95
-            ).mean()
-        )
-
-        # ---------------------------------------------
-        # Vehicle metrics
-        # ---------------------------------------------
-
-        cvs_fill_rate = (
-            float(
-                sim_results.loc[
-                    sim_results["platform"] == "CVS",
-                    "fill_rate",
-                ].mean()
-            )
-            if "platform" in sim_results.columns
-            else mean_fill_rate
-        )
-
-        cds_fill_rate = (
-            float(
-                sim_results.loc[
-                    sim_results["platform"] == "CDS",
-                    "fill_rate",
-                ].mean()
-            )
-            if "platform" in sim_results.columns
-            else mean_fill_rate
-        )
-
-        cvs_fix_holds = bool(
-            mean_fill_rate >= 0.90
-        )
-
-        # ---------------------------------------------
-        # Output row
-        # ---------------------------------------------
-
-        
-        # KPI aggregation
 
         mean_fill_rate = float(
             sim_results.mean_fill_rate
@@ -211,17 +120,13 @@ class MonteCarloPipeline:
             sim_results.tsl_compliance_rate
         )
 
-        # -------------------------------------------------
-        # Fast-mode safe placeholders
-        # -------------------------------------------------
+        # ---------------------------------------------
+        # Fast-mode compatible placeholders
+        # ---------------------------------------------
 
-        fill_rate_high   = mean_fill_rate
+        fill_rate_high = mean_fill_rate
         fill_rate_medium = mean_fill_rate
-        fill_rate_low    = mean_fill_rate
-
-        # -------------------------------------------------
-        # Vehicle metrics placeholders
-        # -------------------------------------------------
+        fill_rate_low = mean_fill_rate
 
         cvs_fill_rate = mean_fill_rate
         cds_fill_rate = mean_fill_rate
@@ -230,16 +135,29 @@ class MonteCarloPipeline:
             mean_fill_rate >= 0.90
         )
 
+        # ---------------------------------------------
+        # Final record
+        # ---------------------------------------------
+
         return {
 
-            "trial_id": trial_id,
-            "scenario": scenario,
+            "trial_id":
+                trial_id,
 
-            "mean_fill_rate": mean_fill_rate,
+            "scenario":
+                scenario,
 
-            "fill_rate_high": fill_rate_high,
-            "fill_rate_medium": fill_rate_medium,
-            "fill_rate_low": fill_rate_low,
+            "mean_fill_rate":
+                mean_fill_rate,
+
+            "fill_rate_high":
+                fill_rate_high,
+
+            "fill_rate_medium":
+                fill_rate_medium,
+
+            "fill_rate_low":
+                fill_rate_low,
 
             "total_stockout_cost":
                 total_stockout_cost,
@@ -278,12 +196,14 @@ class MonteCarloPipeline:
 
         rows = []
 
-        for trial in range(self.n_trials):
+        for trial_id in range(
+            self.n_trials
+        ):
 
             row = self._run_single_trial(
                 sku_df=sku_df,
                 scenario=scenario,
-                trial_id=trial,
+                trial_id=trial_id,
             )
 
             rows.append(row)
@@ -325,22 +245,16 @@ class MonteCarloPipeline:
                     str(exc),
                 )
 
-        # ---------------------------------------------
-        # Defensive protection
-        # ---------------------------------------------
-
         if not results:
 
             raise RuntimeError(
                 "Monte Carlo pipeline produced no scenario outputs."
             )
 
-        combined = pd.concat(
+        return pd.concat(
             results,
             ignore_index=True,
         )
-
-        return combined
 
 
 # =========================================================
@@ -359,5 +273,3 @@ def run_monte_carlo(
     )
 
     return mc.run_all(sku_df)
-
-
