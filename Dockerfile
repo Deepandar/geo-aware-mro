@@ -9,8 +9,13 @@
 
 FROM python:3.10-slim AS builder
 
+# -----------------------------------------------------
+# Environment
+# -----------------------------------------------------
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
@@ -33,15 +38,19 @@ RUN apt-get update && apt-get install -y \
 
 COPY requirements-lock.txt .
 
-RUN pip install --upgrade pip
+RUN python -m pip install --upgrade pip setuptools wheel
 
-RUN pip install --no-cache-dir -r requirements-lock.txt
+RUN pip install -r requirements-lock.txt
 
 # =====================================================
 # Stage 2 — Runtime
 # =====================================================
 
 FROM python:3.10-slim
+
+# -----------------------------------------------------
+# Environment
+# -----------------------------------------------------
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -59,26 +68,32 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------
-# Copy Python Environment
+# Copy Installed Python Packages
 # -----------------------------------------------------
 
-COPY --from=builder /usr/local /usr/local
+COPY --from=builder /usr/local/lib/python3.10 /usr/local/lib/python3.10
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # -----------------------------------------------------
-# Copy Application
+# Copy Application Source
 # -----------------------------------------------------
 
 COPY . .
 
 # -----------------------------------------------------
+# Create Non-Root User
+# -----------------------------------------------------
+
+RUN useradd -m -s /bin/bash appuser
+
+# -----------------------------------------------------
 # Runtime Directories
 # -----------------------------------------------------
 
-RUN useradd -m appuser
-
-RUN mkdir -p /app/logs
-RUN mkdir -p /app/artifacts
-RUN mkdir -p /app/mlflow
+RUN mkdir -p \
+    /app/logs \
+    /app/artifacts \
+    /app/mlflow
 
 RUN chown -R appuser:appuser /app
 
@@ -94,11 +109,11 @@ EXPOSE 8000
 # Health Check
 # -----------------------------------------------------
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
-CMD curl -f http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # -----------------------------------------------------
 # Application Startup
 # -----------------------------------------------------
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]# CI rebuild trigger
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
