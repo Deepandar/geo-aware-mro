@@ -1,5 +1,3 @@
-# src/pdm/rul_engine.py
-
 from __future__ import annotations
 
 import logging
@@ -124,8 +122,7 @@ class RULEngine:
 
         out["hybrid_replenishment_trigger"] = (
             inventory_trigger
-            |
-            out["imminent_failure"]
+            | out["imminent_failure"]
         )
 
         # ---------------------------------------------------------
@@ -148,16 +145,15 @@ class RULEngine:
 
             imminent_mask = (
                 out["imminent_failure"]
-                == True
             )
 
             out.loc[
                 imminent_mask,
-                "ci_score"
+                "ci_score",
             ] = np.maximum(
                 out.loc[
                     imminent_mask,
-                    "ci_score"
+                    "ci_score",
                 ],
                 0.90,
             )
@@ -173,8 +169,7 @@ class RULEngine:
                 out["rul_days"].mean()
             ),
             int(
-                out["imminent_failure"]
-                .sum()
+                out["imminent_failure"].sum()
             ),
             int(
                 out[

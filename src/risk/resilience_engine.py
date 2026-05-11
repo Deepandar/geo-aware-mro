@@ -72,7 +72,7 @@ class ResilienceEngine:
         out = df.copy()
 
         active_mask = (
-            out["scenario_active"] == True
+            out["scenario_active"]
         )
 
         # ---------------------------------------------------------

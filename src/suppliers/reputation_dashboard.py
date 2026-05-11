@@ -236,10 +236,10 @@ def fig_action_distribution(
 
     colors = [
         ACTION_COLORS.get(
-            l,
+            label,
             BLUE,
         )
-        for l in labels
+        for label in labels
     ]
 
     fig = go.Figure(
