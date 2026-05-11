@@ -39,6 +39,5 @@ python-dotenv
 matplotlib
 seaborn
 pytest-cov
-fastembed==0.3.6
 chromadb==0.5.5
 onnxruntime==1.19.2
