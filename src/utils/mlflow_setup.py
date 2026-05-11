@@ -21,6 +21,8 @@ from pathlib import Path
 
 import mlflow
 
+mlflow.set_tracking_uri("sqlite:///mlflow/mlflow.db")
+
 
 logger = logging.getLogger(__name__)
 

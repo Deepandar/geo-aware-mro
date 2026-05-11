@@ -21,7 +21,10 @@ class FastRAGIndexer:
             class DirectFastEmbedWrapper:
                 def __init__(self):
                     # threads=1 is mandatory for stability in MINGW64/constrained environments
-                    self.model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5", threads=1)
+                    self.model = TextEmbedding(
+                        model_name="BAAI/bge-small-en-v1.5",
+                        threads=1
+                    )
                 
                 def __call__(self, input):
                     # Used during upsert/indexing - Parameter must be named 'input'
@@ -39,6 +42,24 @@ class FastRAGIndexer:
                 def name(self) -> str:
                     # Required by ChromaDB to validate configuration and prevent metadata conflicts
                     return "fastembed-bge-small-en-v1.5"
+                @staticmethod
+                def is_legacy():
+                    return False
+
+                @staticmethod
+                def default_space():
+                    return "cosine"
+                @staticmethod
+                def supported_spaces():
+                    return ["cosine"]
+                @staticmethod
+                def get_config():
+                    return {
+
+                        "model_name": "BAAI/bge-small-en-v1.5",
+                        "default_space": "cosine",
+                        "supported_spaces": ["cosine"],
+                    }
 
             self._ef = DirectFastEmbedWrapper()
 
@@ -102,3 +123,33 @@ class FastRAGIndexer:
         self._client = None
         self._ef = None
         gc.collect()
+
+    # ---------------------------------------------------
+    # Backward compatibility for older test suite
+    # ---------------------------------------------------
+
+    def index_documents(self, documents):
+        """
+        Minimal compatible document indexing API
+        expected by the pytest suite.
+        """
+
+        col = self._init_resources()
+
+        ids = [
+            f"manual_doc_{i}"
+            for i in range(len(documents))
+        ]
+
+        metadatas = [
+            {"source": "unit_test"}
+            for _ in documents
+        ]
+
+        col.upsert(
+            ids=ids,
+            documents=documents,
+            metadatas=metadatas,
+        )
+
+        return len(documents)

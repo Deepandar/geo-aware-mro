@@ -74,7 +74,7 @@ def mc():
 
     return MonteCarloPipeline(
         n_trials=5,
-        n_periods=6,
+        sim_periods=6,
         fast_mode=True,
         seed=42,
     )

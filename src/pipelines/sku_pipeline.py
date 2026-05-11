@@ -19,6 +19,8 @@ from pathlib import Path
 import json
 import logging
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import mlflow
 import numpy as np

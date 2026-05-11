@@ -5,7 +5,9 @@ import duckdb
 
 class GeoAwareMROEnv(gym.Env):
     # Updated path to the new DB location
-    def __init__(self, db_path="data/db/geo_aware_mro.db"):
+    def __init__(self, sku_df=None, seed=None, fast_mode=False, **kwargs):
+        self.fast_mode = fast_mode
+        self.seed = seed
         super(GeoAwareMROEnv, self).__init__()
         self.db = duckdb.connect(db_path)
         

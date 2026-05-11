@@ -64,8 +64,8 @@ def test_sim_runs():
     df = build_df()
 
     sim = GeoAwareMROEnv(
-        n_periods=12,
-        n_trials=5,
+        
+        
         fast_mode=True,
     )
 
@@ -79,8 +79,8 @@ def test_fill_rate_bounded():
     df = build_df()
 
     sim = GeoAwareMROEnv(
-        n_periods=10,
-        n_trials=3,
+        
+        
         fast_mode=True,
     )
 
@@ -98,8 +98,8 @@ def test_total_cost_positive():
     df = build_df()
 
     sim = GeoAwareMROEnv(
-        n_periods=10,
-        n_trials=3,
+        
+        
         fast_mode=True,
     )
 
