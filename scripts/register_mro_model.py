@@ -11,6 +11,7 @@ def register_model(run_id, artifact_path):
         def load_context(self, context):
             self.model = PPO.load(context.artifacts["sb3_model"])
         def predict(self, context, model_input):
+            # model_input: [Inventory, Health, Distance, Trade_Flow]
             actions, _ = self.model.predict(model_input.values)
             return pd.Series(actions)
 
