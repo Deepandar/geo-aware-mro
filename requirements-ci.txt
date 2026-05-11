@@ -38,3 +38,4 @@ pyyaml
 python-dotenv
 matplotlib
 seaborn
+pytest-cov
