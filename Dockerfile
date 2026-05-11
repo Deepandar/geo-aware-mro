@@ -101,4 +101,4 @@ CMD curl -f http://localhost:8000/health || exit 1
 # Application Startup
 # -----------------------------------------------------
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]# CI rebuild trigger
