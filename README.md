@@ -1,123 +1,474 @@
 # Geo-Aware MRO Decision Intelligence System
 
-## Problem Statement
+## Multi-Echelon Optimization · Geopolitical Risk Intelligence · AI-Driven Supply Chain Resilience
 
-Maintenance, Repair, and Operations (MRO) inventory management faces three critical challenges:
-
-1. **Intermittent Demand**: Spare parts exhibit sporadic, unpredictable demand patterns that traditional forecasting methods (ARIMA, exponential smoothing) fail to capture accurately.
-
-2. **High Stockout Cost**: Critical components have asymmetric costs — holding excess inventory is expensive, but stockouts can ground operations, causing catastrophic downtime.
-
-3. **Geo-Political Supply Risk**: Global supply chains face disruptions from geopolitical tensions, trade restrictions, and regional instabilities that traditional inventory models ignore.
-
-Traditional forecasting approaches assume continuous, stable demand and fail for sparse time series common in MRO contexts.
+A production-grade decision intelligence platform for Maintenance, Repair, and Overhaul (MRO) ecosystems integrating Operations Research, Artificial Intelligence, Simulation Engineering, and Cloud-Native MLOps.
 
 ---
+
+# Executive Overview
+
+The Geo-Aware MRO Decision Intelligence System is designed to solve complex inventory and operational challenges in asset-intensive environments where uncertainty, intermittent demand, long lead times, and geopolitical disruptions significantly impact mission readiness and operational continuity.
+
+The platform combines:
+
+- Multi-dimensional inventory intelligence
+- Bayesian geopolitical risk modeling
+- Dynamic programming and optimization
+- Simulation-based resilience analysis
+- Cooperative and non-cooperative game theory
+- Reinforcement learning
+- Retrieval-Augmented Generation (RAG)
+- Enterprise-grade MLOps infrastructure
+
+The architecture evolves progressively across three independently deployable versions, each extending the system from deterministic inventory intelligence toward adaptive AI-driven strategic decision systems.
+
+---
+
+# Problem Statement
+
+Modern MRO ecosystems face multiple structural challenges that traditional forecasting and inventory systems cannot adequately address.
+
+## 1. Intermittent and Sparse Demand
+
+MRO spare parts exhibit:
+
+- Irregular demand intervals
+- Low consumption frequency
+- High variability
+- Non-Gaussian demand distributions
+
+Traditional methods such as ARIMA and standard exponential smoothing fail to capture intermittent demand dynamics effectively.
+
+---
+
+## 2. High Operational Criticality
+
+Critical spare parts create asymmetric cost structures:
+
+- Excess inventory increases holding and obsolescence costs
+- Stockouts can halt operations entirely
+- Mission-critical failures propagate system-wide disruption
+
+Inventory systems must therefore optimize for resilience rather than simple cost minimization.
+
+---
+
+## 3. Geopolitical and Supply-Chain Uncertainty
+
+Globalized sourcing introduces operational vulnerability through:
+
+- Trade restrictions
+- Regional conflicts
+- Supplier concentration risk
+- Transportation instability
+- Strategic dependency exposure
+
+Traditional inventory models generally assume static lead times and fail to incorporate geopolitical uncertainty into replenishment decisions.
+
+---
+
+# System Objectives
+
+The primary objective of the platform is to build a unified Geo-Aware Decision Intelligence Framework capable of:
+
+- Classifying inventory using multi-dimensional operational criticality
+- Forecasting intermittent and stochastic demand
+- Modeling geopolitical disruption probabilistically
+- Optimizing inventory policies under uncertainty
+- Simulating resilient supply-chain behavior
+- Enabling AI-driven operational advisory
+- Deploying scalable cloud-native MLOps infrastructure
+
+---
+
+# Strategic Architecture
+
+| Version | Strategic Focus | Core Capability |
+|---|---|---|
+| Version 1.1 | Foundational Intelligence Layer | Classification, Forecasting and Baseline Optimization |
+| Version 1.2 | Adaptive Risk & Simulation Layer | Dynamic Optimization, Simulation and Resilience Modeling |
+| Version 1.3 | Strategic Intelligence Layer | AI-Driven Decision Intelligence and Enterprise Deployment |
+
+---
+
+# VERSION 1.1 — FOUNDATIONAL INTELLIGENCE LAYER
 
 ## Objective
 
-Build an end-to-end decision intelligence system that combines:
-
-- **SKU Classification**: Multi-dimensional categorization (ABC × VED × FSN) to prioritize inventory based on value, criticality, and movement velocity
-- **Intermittent Demand Forecasting**: Croston's method and Syntetos-Boylan Approximation (SBA) for sparse demand patterns
-- **Geo-Risk Quantification**: Bayesian layer incorporating geopolitical risk scores by supplier region
-- **Inventory Optimization**: Newsvendor model with risk-adjusted service levels
-
-The system produces actionable recommendations: optimal reorder points, safety stock levels, and supplier diversification strategies.
+Establish the mathematical and operational foundation for inventory intelligence, demand forecasting, and risk-aware replenishment.
 
 ---
 
-## System Architecture
+## Stage 1 — Repository and Infrastructure Foundation
 
+### Core Components
+- Repository architecture
+- Dockerized development environment
+- CI/CD pipelines
+- MLflow integration
+- DVC-based reproducibility
 
-
-**Pipeline Flow**:
-1. **Data Ingestion**: Historical demand, supplier data, geo-risk indices (DVC-tracked)
-2. **Preprocessing**: SKU classification, time series aggregation, feature extraction
-3. **Modeling**: Intermittent demand forecasting + geo-risk adjustment (MLflow experiments)
-4. **Optimization**: Newsvendor model for reorder points and safety stock
-5. **Deployment**: Dockerized API + Streamlit dashboard
-
----
-
-## Tech Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Language** | Python 3.11 | Core development |
-| **Experiment Tracking** | MLflow | Model versioning, hyperparameter tuning |
-| **Data Versioning** | DVC | Track datasets, ensure reproducibility |
-| **Containerization** | Docker, docker-compose | Environment consistency |
-| **CI/CD** | GitHub Actions | Automated testing, quality gates |
-| **Forecasting** | statsmodels, scikit-learn | Croston's, SBA, classification |
-| **Optimization** | SciPy, NumPy | Newsvendor, inventory optimization |
-| **Visualization** | Matplotlib, Seaborn, Streamlit | EDA, dashboard |
-| **Testing** | pytest | Unit and integration tests |
-| **Documentation** | MkDocs Material | Project docs |
+### Deliverables
+- Reproducible experimentation framework
+- Version-controlled pipelines
+- Environment standardization
 
 ---
 
-## Repository Structure
+## Stage 2 — Data Architecture and SKU Intelligence
 
+### Core Components
+- Synthetic SKU ecosystem
+- Structured feature engineering
+- Data-layer architecture
+- Dominance Guard bias protection
 
----
-
-## Quick Start
-
-### 1. Clone and Setup Environment
-
-```bash
-git clone https://github.com/Deepandar/geo-aware-mro.git
-cd geo-aware-mro
-conda create -n geo-mro python=3.11 -y
-conda activate geo-mro
-pip install -r requirements.txt
-```
-
-### 2. Run with Docker
-
-```bash
-docker-compose up --build
-```
-
-### 3. Run Tests
-
-```bash
-pytest
-```
-
-### 4. View Documentation
-
-```bash
-mkdocs serve
-# Open http://127.0.0.1:8000
-```
+### Deliverables
+- SKU master schema
+- Inventory feature store
+- Bias-corrected Pareto classification
 
 ---
 
-## Project Status
+## Stage 3 — Multi-Dimensional Criticality Intelligence
 
-**Current Phase**: Week 1 — Infrastructure Setup
+### Core Components
+- ABC classification
+- VED criticality analysis
+- FNS demand characterization
+- Location criticality scoring
+- Lead Time Risk (LTR)
 
-- [x] Repository initialization
-- [x] DVC setup (data versioning)
-- [x] MLflow tracking configuration
-- [x] Docker containerization
-- [x] CI/CD pipeline (GitHub Actions)
-- [x] Documentation scaffold (MkDocs)
-- [ ] Data ingestion pipeline (Week 2)
-- [ ] SKU classification model (Week 2)
-- [ ] Intermittent demand forecasting (Week 3)
-- [ ] Geo-risk Bayesian layer (Week 4)
-- [ ] Inventory optimization (Week 5)
-- [ ] Dashboard deployment (Week 6+)
+### Deliverables
+- 27-class taxonomy
+- Composite Criticality Index
+- Geo-aware inventory prioritization
 
 ---
 
-## Contact
+## Stage 4 — Service-Level and Inventory Optimization
 
-**Deepandar Rathore**  
-Data Scientist | ML Engineer  
-New Delhi, India
+### Core Components
+- Target Service Level (TSL) mapping
+- Newsvendor optimization
+- Safety stock modeling
+- Reorder point optimization
 
-GitHub: [@Deepandar](https://github.com/Deepandar)
+### Deliverables
+- Risk-aware inventory policies
+- Service-level optimization engine
+- Cost-service tradeoff analysis
+
+---
+
+## Stage 5 — Forecasting and Risk Intelligence
+
+### Core Components
+- Croston’s Method
+- SBA forecasting
+- Holt-Winters forecasting
+- Bayesian geopolitical risk scoring
+
+### Deliverables
+- Forecasting engine
+- Geo-risk propagation framework
+- Risk-adjusted lead-time intelligence
+
+---
+
+## Stage 6 — Strategic Supplier Intelligence
+
+### Core Components
+- Supplier qualification models
+- Decision-tree risk scoring
+- Nash equilibrium simulations
+- Strategic sourcing analysis
+
+### Deliverables
+- Supplier intelligence engine
+- Strategic sourcing framework
+- Procurement risk analytics
+
+---
+
+# VERSION 1.2 — ADAPTIVE RISK & SIMULATION LAYER
+
+## Objective
+
+Transform the inventory intelligence platform into a dynamic resilience-oriented simulation ecosystem capable of operating under uncertainty and disruption.
+
+---
+
+## Stage 1 — Dynamic Programming Optimization
+
+### Core Components
+- Bellman optimization
+- Push/Pull decoupling
+- Finite-horizon inventory control
+- Policy convergence analysis
+
+### Deliverables
+- Dynamic inventory policies
+- Bellman optimization engine
+- Adaptive replenishment framework
+
+---
+
+## Stage 2 — Predictive Maintenance Integration
+
+### Core Components
+- NASA CMAPSS integration
+- Remaining Useful Life (RUL) modeling
+- Condition-based replenishment
+- Operational environment profiling
+
+### Deliverables
+- Predictive maintenance integration
+- Hybrid Push/Pull engine
+- RUL-triggered inventory logic
+
+---
+
+## Stage 3 — Sequential Games and Supplier Cooperation
+
+### Core Components
+- Repeated games
+- Grim Trigger strategies
+- Folk Theorem validation
+- Supplier reputation modeling
+
+### Deliverables
+- Supplier cooperation framework
+- Strategic reliability engine
+- Multi-period sourcing intelligence
+
+---
+
+## Stage 4 — Discrete Event Simulation
+
+### Core Components
+- SimPy digital twin
+- Depot queue systems
+- Stochastic demand arrivals
+- Lead-time uncertainty propagation
+
+### Deliverables
+- Simulation environment
+- Operational digital twin
+- Multi-echelon simulation framework
+
+---
+
+## Stage 5 — Black Swan Resilience Modeling
+
+### Core Components
+- Geopolitical disruption scenarios
+- Monte Carlo rollouts
+- Resilience scoring
+- Survivability analysis
+
+### Deliverables
+- Black Swan scenario engine
+- Monte Carlo resilience framework
+- Scenario-based risk analytics
+
+---
+
+## Stage 6 — System Dynamics and Bullwhip Analysis
+
+### Core Components
+- Bullwhip quantification
+- Variance amplification analysis
+- Multi-echelon propagation
+- System dynamics modeling
+
+### Deliverables
+- Bullwhip analytics engine
+- Dynamic systems framework
+- Research-grade resilience analysis
+
+---
+
+# VERSION 1.3 — STRATEGIC INTELLIGENCE LAYER
+
+## Objective
+
+Transform the resilience platform into a production-grade AI-enabled strategic decision ecosystem integrating optimization, reinforcement learning, conversational intelligence, and enterprise deployment.
+
+---
+
+## Stage 1 — Multi-Echelon Network Optimization
+
+### Core Components
+- MILP optimization
+- Facility allocation
+- Geo-aware sourcing
+- Capacity-constrained optimization
+
+### Deliverables
+- Multi-echelon optimizer
+- Strategic placement engine
+- Network optimization framework
+
+---
+
+## Stage 2 — Nonlinear Lifecycle Optimization
+
+### Core Components
+- KKT optimization
+- Lifecycle cost modeling
+- Obsolescence optimization
+- Asset-health balancing
+
+### Deliverables
+- Lifecycle optimization engine
+- Nonlinear decision framework
+- Repair-vs-replace intelligence
+
+---
+
+## Stage 3 — Auction and Cooperative Intelligence
+
+### Core Components
+- Sealed-bid auctions
+- English auctions
+- Dutch auction simulations
+- Shapley Value allocation
+
+### Deliverables
+- Procurement strategy engine
+- Auction simulator
+- Cooperative cost allocation framework
+
+---
+
+## Stage 4 — LLM Advisory Layer
+
+### Core Components
+- LangChain RAG pipelines
+- ChromaDB vector indexing
+- Conversational operational intelligence
+- Knowledge-grounded advisory
+
+### Deliverables
+- AI advisory layer
+- Retrieval-Augmented intelligence system
+- What-if analysis framework
+
+---
+
+## Stage 5 — Reinforcement Learning Optimization
+
+### Core Components
+- MDP environment design
+- PPO policy learning
+- Adaptive reorder optimization
+- Policy benchmarking
+
+### Deliverables
+- RL reorder agent
+- Autonomous inventory policies
+- Adaptive replenishment intelligence
+
+---
+
+## Stage 6 — Enterprise Deployment and Research Publication
+
+### Core Components
+- Docker Compose deployment
+- FastAPI orchestration
+- Looker dashboards
+- MLflow monitoring
+- Technical research publication
+
+### Deliverables
+- Enterprise deployment stack
+- Monitoring infrastructure
+- Research publication package
+
+---
+
+# Core SKU Intelligence Framework
+
+| Layer | Dimension | Analytical Purpose |
+|---|---|---|
+| 1 | FNS Classification | Demand behavior characterization |
+| 2 | ABC Classification | Financial prioritization |
+| 3 | VED Classification | Mission criticality analysis |
+| 4 | Location Criticality | Operational deployment importance |
+| 5 | Geopolitical Risk | Disruption probability estimation |
+| 6 | Lead Time Risk | Supply exposure quantification |
+| 7 | Network Constraints | Routing and allocation penalties |
+| 8 | Hybrid Push/Pull Logic | Adaptive replenishment decisions |
+
+---
+
+# Mathematical Framework
+
+## Criticality Index
+
+:contentReference[oaicite:0]{index=0}
+
+## Bellman Optimization
+
+:contentReference[oaicite:1]{index=1}
+
+## Bayesian Risk Propagation
+
+:contentReference[oaicite:2]{index=2}
+
+## Shapley Value Allocation
+
+:contentReference[oaicite:3]{index=3}
+
+---
+
+# Technology Stack
+
+| Domain | Tools |
+|---|---|
+| Programming | Python |
+| Data Engineering | Pandas, NumPy, DuckDB |
+| Forecasting | Statsmodels, Prophet |
+| Optimization | PuLP, OR-Tools, SciPy |
+| Simulation | SimPy |
+| Reinforcement Learning | Stable-Baselines3 |
+| LLM Framework | LangChain |
+| Vector Database | ChromaDB |
+| APIs | FastAPI |
+| MLOps | MLflow, DVC |
+| Visualization | Streamlit, Plotly, Looker |
+| Deployment | Docker, Docker Compose |
+| Cloud Infrastructure | BigQuery, Vertex AI |
+
+---
+
+# Repository Structure
+
+```text
+geo-aware-mro/
+│
+├── docs/
+│   ├── architecture/
+│   ├── mathematics/
+│   ├── deployment/
+│   ├── research/
+│   └── roadmap/
+│
+├── src/
+│   ├── forecasting/
+│   ├── optimization/
+│   ├── simulation/
+│   ├── game_theory/
+│   ├── reinforcement_learning/
+│   └── llm/
+│
+├── notebooks/
+├── tests/
+├── deployment/
+├── docker/
+├── configs/
+├── data/
+├── mlruns/
+└── README.md
