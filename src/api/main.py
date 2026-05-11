@@ -6,6 +6,21 @@ from src.api.routes.root import router as root_router
 
 
 
+
+
+
+from src.api.routes.rl_jobs import (
+    router as rl_router
+)
+
+from src.api.routes.job_status import (
+    router as job_status_router
+)
+
+from src.api.routes.jobs import (
+    router as jobs_router
+)
+
 from src.api.routes.distributed import (
     router as distributed_router
 )
@@ -34,3 +49,6 @@ app.include_router(inference_router)
 app.include_router(simulation_router)
 app.include_router(mlflow_router)
 app.include_router(distributed_router)
+app.include_router(jobs_router)
+app.include_router(job_status_router)
+app.include_router(rl_router)

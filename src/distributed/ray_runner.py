@@ -1,5 +1,4 @@
 try:
-    import ray
 
     RAY_AVAILABLE = True
 
