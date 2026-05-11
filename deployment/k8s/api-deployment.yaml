@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: geo-aware-mro-api
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: geo-aware-mro-api
+
+  template:
+
+    metadata:
+      labels:
+        app: geo-aware-mro-api
+
+    spec:
+
+      containers:
+
+      - name: api
+
+        image: geo-aware-mro:latest
+
+        imagePullPolicy: Never
+
+        ports:
+        - containerPort: 8000
+
+        env:
+
+        - name: ENVIRONMENT
+          value: "production"
+
+        - name: API_KEY
+          value: "geo-aware-mro-prod"
+
+        - name: MLFLOW_TRACKING_URI
+          value: "sqlite:///mlflow/mlflow.db"
+
+        readinessProbe:
+
+          httpGet:
+            path: /health
+            port: 8000
+
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+
+          httpGet:
+            path: /health
+            port: 8000
+
+          initialDelaySeconds: 10
+          periodSeconds: 15
+
+        resources:
+
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"

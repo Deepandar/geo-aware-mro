@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: celery-worker
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: celery-worker
+
+  template:
+
+    metadata:
+      labels:
+        app: celery-worker
+
+    spec:
+
+      containers:
+
+      - name: celery-worker
+
+        image: geo-aware-mro:latest
+
+        imagePullPolicy: Never
+
+        command:
+          - celery
+
+        args:
+          - -A
+          - src.orchestration.tasks
+          - worker
+          - --loglevel=info
+
+        env:
+
+        - name: CELERY_BROKER_URL
+          value: "redis://redis-service:6379/0"
