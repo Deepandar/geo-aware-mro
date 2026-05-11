@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 
+from src.api.middleware.request_logger import (
+    RequestLoggingMiddleware
+)
+
+
 from src.api.routes.health import router as health_router
 from src.api.routes.root import router as root_router
 
@@ -39,7 +44,7 @@ from src.api.routes.inference import (
 
 
 app = FastAPI(
-    title="geo-aware-mro",
+    title="Geo-Aware MRO Decision Intelligence System",
     version="2.0"
 )
 
@@ -52,3 +57,8 @@ app.include_router(distributed_router)
 app.include_router(jobs_router)
 app.include_router(job_status_router)
 app.include_router(rl_router)
+
+
+app.add_middleware(
+    RequestLoggingMiddleware
+)
