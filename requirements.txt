@@ -26,3 +26,11 @@ pulp==2.9.0
 
 stable-baselines3==2.3.2
 gymnasium==0.29.1
+
+# =====================================================
+# RAG / Embedding Infrastructure
+# =====================================================
+
+fastembed==0.3.6
+chromadb==0.5.5
+onnxruntime==1.19.2
