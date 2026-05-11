@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from src.simulation.depot_sim import (
-    DepotSimulator,
+    GeoAwareMROEnv,
 )
 
 from src.simulation.scenario_injector import (
@@ -83,8 +83,8 @@ class MonteCarloPipeline:
         # Build simulator
         # ---------------------------------------------
 
-        sim = DepotSimulator(
-            sim_periods=self.sim_periods,
+        sim = GeoAwareMROEnv(
+            n_periods=self.sim_periods,
             n_trials=1,
             seed=int(
                 self.rng.integers(
@@ -269,7 +269,7 @@ def run_monte_carlo(
 
     mc = MonteCarloPipeline(
         n_trials=n_trials,
-        sim_periods=sim_periods,
+        n_periods=sim_periods,
     )
 
     return mc.run_all(sku_df)
