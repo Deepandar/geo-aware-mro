@@ -63,21 +63,6 @@ class MonteCarloPipeline:
 
             mean_fill_rate = metrics["fill_rate"]
 
-            high_mask = (
-                sku_df["ci_tier"]
-                == "High"
-            )
-
-            medium_mask = (
-                sku_df["ci_tier"]
-                == "Medium"
-            )
-
-            low_mask = (
-                sku_df["ci_tier"]
-                == "Low"
-            )
-
             row = {
 
                 "trial_id":

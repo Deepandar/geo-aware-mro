@@ -1,4 +1,48 @@
 
+import pandas as pd
+import plotly.graph_objects as go
+
+# -----------------------------------------------------
+# Visualization theme
+# -----------------------------------------------------
+
+TEXT = "#EAEAEA"
+
+LAYOUT = {
+    "template": "plotly_dark",
+    "paper_bgcolor": "#111111",
+    "plot_bgcolor": "#111111",
+}
+
+# -----------------------------------------------------
+# Compatibility placeholder
+# -----------------------------------------------------
+
+class BullwhipSummary:
+    pass
+
+# -----------------------------------------------------
+# Fallback visualization stubs
+# -----------------------------------------------------
+
+def fig_bwr_by_echelon(summary):
+
+    return go.Figure()
+
+def fig_policy_comparison(comparison_df):
+
+    return go.Figure()
+
+def fig_bwr_distribution_by_tier(bw_df):
+
+    return go.Figure()
+
+def fig_order_demand_timeseries(result):
+
+    return go.Figure()
+
+
+
 # ──────────────────────────────────────────────────────────
 # Heatmap: amplification matrix
 # ──────────────────────────────────────────────────────────

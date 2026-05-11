@@ -148,3 +148,5 @@ yarl==1.23.0
 zc.lockfile==4.0
 zipp==3.23.1
 simpy==4.1.1
+fastembed
+chromadb

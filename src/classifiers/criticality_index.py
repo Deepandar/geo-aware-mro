@@ -184,7 +184,6 @@ class CriticalityIndexer:
                 out[
                     "alternative_sourcing_required"
                 ]
-                == True
             )
 
             out.loc[

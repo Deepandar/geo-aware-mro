@@ -1,5 +1,3 @@
-import logging
-from typing import Optional
 import numpy as np
 
 try:
@@ -63,7 +61,8 @@ if GYM_AVAILABLE:
             shortfall = demand - filled
             self._total_filled += filled
             self._inventory = min(max(self._inventory - demand, 0.0), self.max_inv)
-            if shortfall > 0: self._stockout_events += 1
+            if shortfall > 0:
+                self._stockout_events += 1
             holding_cost = (self._inventory * self.unit_cost * self.holding_rate)
             stockout_cost = shortfall * self.stockout_cost
             reward = -(holding_cost + stockout_cost + fixed_cost) / max(self._cost_scale, 1.0)

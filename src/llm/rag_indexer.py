@@ -74,7 +74,8 @@ class FastRAGIndexer:
         # Explicitly ignore heavy/recursive folders seen in your project structure
         ignore = {"__pycache__", ".git", ".pytest_cache", "venv_notebooks", "data", "logs", "mlruns"}
         for root, _, files in os.walk("."):
-            if any(ig in root for ig in ignore): continue
+            if any(ig in root for ig in ignore):
+                continue
             for f in files:
                 fp = Path(root) / f
                 # Filter for relevant text files under a safe size limit (100KB)
