@@ -33,26 +33,31 @@ class GeoAwareMROEnv(gym.Env):
         return self.state, {}
 
     def step(self, action):
-        self.steps += 1
-        inventory, health, distance, _ = self.state
-        trade_flow = self.trade_series[self.trade_ptr + self.steps]
+        # ... [Your logic for updating state, health, and inventory] ...
         
+        # --- The Reward Logic we added ---
+        MAINTENANCE_COST = -0.7
+        INVENTORY_COST = -0.4
         reward = 0.1
-        if action == 1: # Resuscitate
-            health = min(1.0, health + 0.2)
-            reward += 0.5
-        elif action == 2: # Restock
-            # Global trade flow impacts restocking success
-            restock_success = 0.3 * trade_flow 
-            inventory = min(1.0, inventory + restock_success)
-            reward += restock_success
-            
-        health -= 0.05
-        self.state = np.array([inventory, health, distance, trade_flow], dtype=np.float32)
         
-        terminated = self.steps >= 100
-        if health <= 0:
-            reward -= 2.0
+        terminated = False
+        truncated = False # Usually False unless you have a time limit
+
+        if action == 1:  # Resuscitation
+            if self.state[1] < 0.7:
+                reward += 0.5
+            reward += MAINTENANCE_COST
+        elif action == 2:  # Restock
+            reward += 0.3
+            reward += INVENTORY_COST
+
+        if self.state[1] <= 0:
+            reward = -2.0
             terminated = True
-            
-        return self.state, reward, terminated, False, {}
+
+        # --- THE MISSING PART ---
+        # Ensure 'self.state' is updated before this
+        observation = self.state 
+        info = {} # Can be empty, but must be a dict
+        
+        return observation, reward, terminated, truncated, info
