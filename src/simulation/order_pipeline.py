@@ -44,9 +44,7 @@ class SKUInventoryState:
 
     stockout_events: int = 0
 
-    order_records: list = field(
-        default_factory=list
-    )
+    order_records: list = field(default_factory=list)
 
     unit_cost: float = 100.0
     stockout_cost_usd: float = 500.0
@@ -58,8 +56,4 @@ class SKUInventoryState:
         if self.total_demand <= 0:
             return 1.0
 
-        return (
-            self.total_filled
-            / self.total_demand
-        )
-
+        return self.total_filled / self.total_demand

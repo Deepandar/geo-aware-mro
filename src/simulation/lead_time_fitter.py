@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 # =========================================================
 
 COUNTRY_CLUSTERS = {
-
     # LOW RISK
     "IN": "LOW_RISK",
     "DE": "LOW_RISK",
@@ -28,20 +27,17 @@ COUNTRY_CLUSTERS = {
     "IL": "LOW_RISK",
     "GB": "LOW_RISK",
     "JP": "LOW_RISK",
-
     # MEDIUM RISK
     "CN": "MEDIUM_RISK",
     "TW": "MEDIUM_RISK",
     "KR": "MEDIUM_RISK",
     "AE": "MEDIUM_RISK",
     "SA": "MEDIUM_RISK",
-
     # HIGH RISK
     "RU": "HIGH_RISK",
     "BY": "HIGH_RISK",
     "IR": "HIGH_RISK",
     "PK": "HIGH_RISK",
-
     # CONFLICT
     "UA": "CONFLICT",
     "SY": "CONFLICT",
@@ -55,12 +51,11 @@ COUNTRY_CLUSTERS = {
 # =========================================================
 
 CLUSTER_GAMMA_PARAMS = {
-
-    "LOW_RISK":    (2.0, 2.0),
+    "LOW_RISK": (2.0, 2.0),
     "MEDIUM_RISK": (3.0, 8.0),
-    "HIGH_RISK":   (2.0, 30.0),
-    "CONFLICT":    (1.5, 80.0),
-    "UNKNOWN":     (2.5, 10.0),
+    "HIGH_RISK": (2.0, 30.0),
+    "CONFLICT": (1.5, 80.0),
+    "UNKNOWN": (2.5, 10.0),
 }
 
 
@@ -69,21 +64,17 @@ CLUSTER_GAMMA_PARAMS = {
 # =========================================================
 
 SCENARIO_LT_MULTIPLIERS = {
-
     "baseline": {},
-
     "sanctions": {
         "HIGH_RISK": 4.0,
         "CONFLICT": 5.0,
         "MEDIUM_RISK": 1.5,
     },
-
     "conflict": {
         "HIGH_RISK": 5.0,
         "CONFLICT": 8.0,
         "MEDIUM_RISK": 2.0,
     },
-
     "pandemic": {
         "LOW_RISK": 2.0,
         "MEDIUM_RISK": 2.5,
@@ -91,12 +82,10 @@ SCENARIO_LT_MULTIPLIERS = {
         "CONFLICT": 3.5,
         "UNKNOWN": 2.0,
     },
-
     "port_closure": {
         "MEDIUM_RISK": 3.0,
         "HIGH_RISK": 3.5,
     },
-
     "logistics_collapse": {
         "LOW_RISK": 2.0,
         "MEDIUM_RISK": 2.0,
@@ -110,6 +99,7 @@ SCENARIO_LT_MULTIPLIERS = {
 # =========================================================
 # DISTRIBUTION OBJECT
 # =========================================================
+
 
 @dataclass
 class LeadTimeDistribution:
@@ -129,6 +119,7 @@ class LeadTimeDistribution:
 # =========================================================
 # MAIN FITTER
 # =========================================================
+
 
 class StochasticLeadTimeFitter:
 
@@ -164,23 +155,13 @@ class StochasticLeadTimeFitter:
                 1.0,
             )
 
-            self._distributions[
-                cluster
-            ] = LeadTimeDistribution(
-
+            self._distributions[cluster] = LeadTimeDistribution(
                 country=cluster,
                 cluster=cluster,
-
                 alpha=alpha,
-
                 beta=beta * mult,
-
                 mean_lt=alpha * beta * mult,
-
-                std_lt=np.sqrt(alpha)
-                * beta
-                * mult,
-
+                std_lt=np.sqrt(alpha) * beta * mult,
                 scenario_mult=mult,
             )
 
@@ -196,9 +177,7 @@ class StochasticLeadTimeFitter:
             "UNKNOWN",
         )
 
-        return self._distributions[
-            cluster
-        ]
+        return self._distributions[cluster]
 
     # -----------------------------------------------------
 
@@ -210,28 +189,20 @@ class StochasticLeadTimeFitter:
         rng: np.random.Generator,
     ) -> float:
 
-        dist = self.get_distribution(
-            country
-        )
+        dist = self.get_distribution(country)
 
         baseline = rng.gamma(
-
             shape=max(
                 dist.alpha,
                 0.1,
             ),
-
             scale=max(
                 dist.beta,
                 0.1,
             ),
         )
 
-        delta_geo = (
-            geo_risk
-            * dist.mean_lt
-            * self.penalty_factor
-        )
+        delta_geo = geo_risk * dist.mean_lt * self.penalty_factor
 
         total_lt = baseline + delta_geo
 
@@ -251,17 +222,17 @@ class StochasticLeadTimeFitter:
         rng: np.random.Generator,
     ):
 
-        return np.array([
-
-            self.sample_lead_time(
-                country,
-                geo_risk,
-                baseline_lt,
-                rng,
-            )
-
-            for _ in range(n)
-        ])
+        return np.array(
+            [
+                self.sample_lead_time(
+                    country,
+                    geo_risk,
+                    baseline_lt,
+                    rng,
+                )
+                for _ in range(n)
+            ]
+        )
 
     # -----------------------------------------------------
 
@@ -276,19 +247,13 @@ class StochasticLeadTimeFitter:
             dtype=float,
         )
 
-        observed_lts = observed_lts[
-            observed_lts > 0
-        ]
+        observed_lts = observed_lts[observed_lts > 0]
 
         if len(observed_lts) < 5:
 
-            logger.warning(
-                "Too few observations"
-            )
+            logger.warning("Too few observations")
 
-            return self.get_distribution(
-                country
-            )
+            return self.get_distribution(country)
 
         alpha, loc, beta = stats.gamma.fit(
             observed_lts,
@@ -301,22 +266,15 @@ class StochasticLeadTimeFitter:
         )
 
         fitted = LeadTimeDistribution(
-
             country=country,
             cluster=cluster,
-
             alpha=alpha,
             beta=beta,
-
             mean_lt=alpha * beta,
-
-            std_lt=np.sqrt(alpha)
-            * beta,
+            std_lt=np.sqrt(alpha) * beta,
         )
 
-        self._distributions[
-            cluster
-        ] = fitted
+        self._distributions[cluster] = fitted
 
         return fitted
 
@@ -333,9 +291,7 @@ class StochasticLeadTimeFitter:
 
         for _, row in sku_df.iterrows():
 
-            iid = str(
-                row["item_id"]
-            )
+            iid = str(row["item_id"])
 
             country = str(
                 row.get(
@@ -351,22 +307,13 @@ class StochasticLeadTimeFitter:
                 )
             )
 
-            dist = self.get_distribution(
-                country
-            )
+            dist = self.get_distribution(country)
 
-            mu = (
-                dist.mean_lt
-                + geo_risk
-                * dist.mean_lt
-                * self.penalty_factor
-            )
+            mu = dist.mean_lt + geo_risk * dist.mean_lt * self.penalty_factor
 
             mu_overrides[iid] = mu
 
-            sig_overrides[iid] = (
-                dist.std_lt
-            )
+            sig_overrides[iid] = dist.std_lt
 
         return (
             mu_overrides,
@@ -381,50 +328,33 @@ class StochasticLeadTimeFitter:
 
         rows = []
 
-        for cluster, d in (
-            self._distributions.items()
-        ):
+        for cluster, d in self._distributions.items():
 
-            rows.append({
-
-                "cluster":
-                    cluster,
-
-                "alpha":
-                    round(
+            rows.append(
+                {
+                    "cluster": cluster,
+                    "alpha": round(
                         d.alpha,
                         3,
                     ),
-
-                "beta":
-                    round(
+                    "beta": round(
                         d.beta,
                         3,
                     ),
-
-                "mean_lt_days":
-                    round(
+                    "mean_lt_days": round(
                         d.mean_lt,
                         1,
                     ),
-
-                "std_lt_days":
-                    round(
+                    "std_lt_days": round(
                         d.std_lt,
                         1,
                     ),
+                    "scenario_mult": d.scenario_mult,
+                    "scenario": self.scenario,
+                }
+            )
 
-                "scenario_mult":
-                    d.scenario_mult,
-
-                "scenario":
-                    self.scenario,
-            })
-
-        return pd.DataFrame(
-            rows
-        ).sort_values(
+        return pd.DataFrame(rows).sort_values(
             "mean_lt_days",
             ascending=False,
         )
-

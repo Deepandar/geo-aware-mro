@@ -2,9 +2,7 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
+
 @router.get("/health")
 def health():
-    return {
-        "status": "ok",
-        "service": "geo-aware-mro"
-    }
+    return {"status": "ok", "service": "geo-aware-mro"}

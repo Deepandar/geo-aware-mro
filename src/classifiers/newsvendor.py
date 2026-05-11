@@ -10,13 +10,13 @@ import yaml
 
 from scipy import stats
 
-
 logger = logging.getLogger(__name__)
 
 
 # -------------------------------------------------------------
 # Load Config
 # -------------------------------------------------------------
+
 
 def load_config():
 
@@ -25,17 +25,15 @@ def load_config():
         "r",
     ) as f:
 
-        return yaml.safe_load(f)[
-            "tsl_config"
-        ]
+        return yaml.safe_load(f)["tsl_config"]
 
 
 # -------------------------------------------------------------
 # Newsvendor Engine
 # -------------------------------------------------------------
 
-class NewsvendorEngine:
 
+class NewsvendorEngine:
     """
     Risk-aware Newsvendor Engine (v1.4)
 
@@ -52,17 +50,11 @@ class NewsvendorEngine:
 
         cfg = load_config()
 
-        self.tsl_map = cfg[
-            "tsl_map"
-        ]
+        self.tsl_map = cfg["tsl_map"]
 
-        self.fns_mod = cfg[
-            "fns_modulation"
-        ]
+        self.fns_mod = cfg["fns_modulation"]
 
-        logger.info(
-            "NewsvendorEngine initialised"
-        )
+        logger.info("NewsvendorEngine initialised")
 
     # ---------------------------------------------------------
     # Resolve TSL
@@ -85,10 +77,7 @@ class NewsvendorEngine:
             0.50,
         )
 
-        tsl = (
-            low
-            + mod * (high - low)
-        )
+        tsl = low + mod * (high - low)
 
         return float(
             np.clip(
@@ -129,9 +118,7 @@ class NewsvendorEngine:
         ]:
 
             return (
-                stats.poisson(
-                    mu=mean
-                ),
+                stats.poisson(mu=mean),
                 "poisson",
             )
 
@@ -149,17 +136,14 @@ class NewsvendorEngine:
             "Intermittent",
         ]:
 
-            var = std ** 2
+            var = std**2
 
             if var > mean:
 
                 r = max(
-                    mean ** 2
+                    mean**2
                     / max(
-                        (
-                            var
-                            - mean
-                        ),
+                        (var - mean),
                         1e-6,
                     ),
                     1e-3,
@@ -214,9 +198,7 @@ class NewsvendorEngine:
             axis=1,
         )
 
-        df["critical_ratio"] = (
-            df["tsl"]
-        )
+        df["critical_ratio"] = df["tsl"]
 
         # -----------------------------------------------------
         # Demand moments
@@ -224,38 +206,30 @@ class NewsvendorEngine:
 
         if "mean_demand" not in df.columns:
 
-            df["mean_demand"] = (
-                df["demand"]
-            )
+            df["mean_demand"] = df["demand"]
 
         if "std_demand" not in df.columns:
 
-            df["std_demand"] = (
-                df["demand"]
-                * 0.30
-            )
+            df["std_demand"] = df["demand"] * 0.30
 
         # -----------------------------------------------------
         # Safe clipping
         # -----------------------------------------------------
 
         df["mean_demand"] = np.clip(
-            df["mean_demand"]
-            .astype(float),
+            df["mean_demand"].astype(float),
             0.01,
             None,
         )
 
         df["std_demand"] = np.clip(
-            df["std_demand"]
-            .astype(float),
+            df["std_demand"].astype(float),
             0.01,
             None,
         )
 
         df["lead_time_days"] = np.clip(
-            df["lead_time_days"]
-            .astype(float),
+            df["lead_time_days"].astype(float),
             1.0,
             365.0,
         )
@@ -270,17 +244,11 @@ class NewsvendorEngine:
 
         for _, r in df.iterrows():
 
-            mean = float(
-                r["mean_demand"]
-            )
+            mean = float(r["mean_demand"])
 
-            std = float(
-                r["std_demand"]
-            )
+            std = float(r["std_demand"])
 
-            lead_time = float(
-                r["lead_time_days"]
-            )
+            lead_time = float(r["lead_time_days"])
 
             cr = float(
                 np.clip(
@@ -294,12 +262,10 @@ class NewsvendorEngine:
             # Distribution fit
             # -------------------------------------------------
 
-            dist, dist_name = (
-                self._fit_dist(
-                    mean,
-                    std,
-                    r["fns_class"],
-                )
+            dist, dist_name = self._fit_dist(
+                mean,
+                std,
+                r["fns_class"],
             )
 
             # -------------------------------------------------
@@ -308,18 +274,11 @@ class NewsvendorEngine:
 
             try:
 
-                q = float(
-                    dist.ppf(cr)
-                )
+                q = float(dist.ppf(cr))
 
             except Exception:
 
-                logger.warning(
-                    (
-                        "Distribution failure | "
-                        "fallback mean demand"
-                    )
-                )
+                logger.warning(("Distribution failure | " "fallback mean demand"))
 
                 q = mean
 
@@ -341,9 +300,7 @@ class NewsvendorEngine:
 
             try:
 
-                z = float(
-                    stats.norm.ppf(cr)
-                )
+                z = float(stats.norm.ppf(cr))
 
             except Exception:
 
@@ -360,19 +317,7 @@ class NewsvendorEngine:
             # Robust ROP
             # -------------------------------------------------
 
-            rop = (
-                (
-                    mean
-                    * lead_time
-                )
-                + (
-                    z
-                    * std
-                    * np.sqrt(
-                        lead_time
-                    )
-                )
-            )
+            rop = (mean * lead_time) + (z * std * np.sqrt(lead_time))
 
             rop = np.nan_to_num(
                 rop,
@@ -417,15 +362,9 @@ class NewsvendorEngine:
                 "mean_rop=%.2f | "
                 "mean_tsl=%.3f"
             ),
-            float(
-                df["q_star"].mean()
-            ),
-            float(
-                df["rop"].mean()
-            ),
-            float(
-                df["tsl"].mean()
-            ),
+            float(df["q_star"].mean()),
+            float(df["rop"].mean()),
+            float(df["tsl"].mean()),
         )
 
         return df

@@ -51,11 +51,15 @@ def test_environment_fields_created_and_consistent(tmp_path):
     from week3_day4_final_scorer import WEIGHTS
 
     manual_ci = (
-        WEIGHTS["abc"] * out["abcscore"]
-        + WEIGHTS["ved"] * out["vedscore"]
-        + WEIGHTS["fns"] * out["fnsscore"]
-        + WEIGHTS["loc"] * out["location_score_adj"]
-    ).clip(0, 1).round(4)
+        (
+            WEIGHTS["abc"] * out["abcscore"]
+            + WEIGHTS["ved"] * out["vedscore"]
+            + WEIGHTS["fns"] * out["fnsscore"]
+            + WEIGHTS["loc"] * out["location_score_adj"]
+        )
+        .clip(0, 1)
+        .round(4)
+    )
 
     pd.testing.assert_series_equal(
         out["ci"],

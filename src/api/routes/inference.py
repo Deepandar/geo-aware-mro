@@ -8,14 +8,10 @@ from src.api.schemas.inference import (
     RiskResponse,
 )
 
-from src.security.auth import (
-    verify_api_key
-)
+from src.security.auth import verify_api_key
 
-router = APIRouter(
-    prefix="/inference",
-    tags=["Inference"]
-)
+router = APIRouter(prefix="/inference", tags=["Inference"])
+
 
 @router.post(
     "/risk-score",
@@ -23,15 +19,9 @@ router = APIRouter(
 )
 def score_risk(
     payload: RiskRequest,
-    authorized: bool = Depends(
-        verify_api_key
-    ),
+    authorized: bool = Depends(verify_api_key),
 ):
 
-    risk_score = (
-        payload.supplier_score * 0.8
-    )
+    risk_score = payload.supplier_score * 0.8
 
-    return {
-        "risk_score": risk_score
-    }
+    return {"risk_score": risk_score}

@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # IMPACT DATACLASS
 # =========================================================
 
+
 @dataclass
 class ScenarioImpact:
 
@@ -53,6 +54,7 @@ class ScenarioImpact:
 # SCENARIO INJECTOR
 # =========================================================
 
+
 class ScenarioInjector:
 
     def __init__(
@@ -64,9 +66,7 @@ class ScenarioInjector:
         self.path = Path(scenario_library_path)
 
         if not self.path.exists():
-            raise FileNotFoundError(
-                f"Scenario library not found: {self.path}"
-            )
+            raise FileNotFoundError(f"Scenario library not found: {self.path}")
 
         with open(self.path, "r", encoding="utf-8") as f:
             raw = yaml.safe_load(f)
@@ -95,9 +95,7 @@ class ScenarioInjector:
     ) -> ScenarioImpact:
 
         if scenario not in self.library:
-            raise ValueError(
-                f"Unknown scenario: {scenario}"
-            )
+            raise ValueError(f"Unknown scenario: {scenario}")
 
         scenario_cfg = self.library[scenario]
 
@@ -188,27 +186,14 @@ class ScenarioInjector:
             # DETERMINE ELIGIBILITY
             # =============================================
 
-            origin_match = (
-                "ALL" in affected_origins
-                or origin in affected_origins
-            )
+            origin_match = "ALL" in affected_origins or origin in affected_origins
 
-            cluster_match = (
-                "ALL" in affected_clusters
-                or cluster in affected_clusters
-            )
+            cluster_match = "ALL" in affected_clusters or cluster in affected_clusters
 
-            stochastic_trigger = (
-                self.rng.random() < affected_pct
-            )
+            stochastic_trigger = self.rng.random() < affected_pct
 
-            affected = (
-                scenario == "baseline"
-                or (
-                    origin_match
-                    and cluster_match
-                    and stochastic_trigger
-                )
+            affected = scenario == "baseline" or (
+                origin_match and cluster_match and stochastic_trigger
             )
 
             # =============================================
@@ -315,17 +300,9 @@ class ScenarioInjector:
 
         n_total = len(modified_df)
 
-        pct_affected = (
-            affected_count / n_total
-            if n_total > 0
-            else 0.0
-        )
+        pct_affected = affected_count / n_total if n_total > 0 else 0.0
 
-        mean_mult = (
-            float(np.mean(lt_multipliers))
-            if len(lt_multipliers) > 0
-            else 1.0
-        )
+        mean_mult = float(np.mean(lt_multipliers)) if len(lt_multipliers) > 0 else 1.0
 
         logger.info(
             "Scenario=%s | affected=%d/%d | mean_LT_mult=%.2f",
@@ -336,21 +313,14 @@ class ScenarioInjector:
         )
 
         return ScenarioImpact(
-
             scenario_name=scenario,
-
             lt_mu_overrides=mu_overrides,
             lt_sigma_overrides=sigma_overrides,
-
             modified_df=modified_df,
-
             n_skus_affected=affected_count,
             pct_skus_affected=pct_affected,
-
             mean_lt_multiplier=mean_mult,
-
             geo_risk_delta=geo_delta,
-
             stockout_cost_multiplier=stockout_mult,
         )
 
@@ -389,26 +359,16 @@ class ScenarioInjector:
 
         for impact in impacts:
 
-            rows.append({
-
-                "scenario":
-                    impact.scenario_name,
-
-                "n_skus_affected":
-                    impact.n_skus_affected,
-
-                "pct_skus_affected":
-                    impact.pct_skus_affected,
-
-                "mean_lt_multiplier":
-                    impact.mean_lt_multiplier,
-
-                "geo_risk_delta":
-                    impact.geo_risk_delta,
-
-                "stockout_cost_multiplier":
-                    impact.stockout_cost_multiplier,
-            })
+            rows.append(
+                {
+                    "scenario": impact.scenario_name,
+                    "n_skus_affected": impact.n_skus_affected,
+                    "pct_skus_affected": impact.pct_skus_affected,
+                    "mean_lt_multiplier": impact.mean_lt_multiplier,
+                    "geo_risk_delta": impact.geo_risk_delta,
+                    "stockout_cost_multiplier": impact.stockout_cost_multiplier,
+                }
+            )
 
         return pd.DataFrame(rows)
 
@@ -421,20 +381,18 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    df = pd.DataFrame({
-        "item_id": ["A", "B", "C"],
-        "supply_origin_country": ["RU", "IN", "CN"],
-        "mean_lead_time": [60, 20, 45],
-        "std_lead_time": [15, 5, 10],
-        "geo_risk_score": [0.8, 0.2, 0.5],
-    })
-
-    injector = ScenarioInjector(
-        "config/scenario_library.yaml"
+    df = pd.DataFrame(
+        {
+            "item_id": ["A", "B", "C"],
+            "supply_origin_country": ["RU", "IN", "CN"],
+            "mean_lead_time": [60, 20, 45],
+            "std_lead_time": [15, 5, 10],
+            "geo_risk_score": [0.8, 0.2, 0.5],
+        }
     )
+
+    injector = ScenarioInjector("config/scenario_library.yaml")
 
     impacts = injector.inject_all(df)
 
-    print(
-        injector.impact_summary(impacts)
-    )
+    print(injector.impact_summary(impacts))

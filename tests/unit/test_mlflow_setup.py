@@ -12,9 +12,7 @@ def test_dummy_run_executes(
     mock_run,
 ):
 
-    from src.utils.mlflow_setup import (
-        setup_mlflow
-    )
+    from src.utils.mlflow_setup import setup_mlflow
 
     setup_mlflow()
 

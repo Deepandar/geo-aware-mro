@@ -7,7 +7,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -15,7 +14,6 @@ EPSILON = 1e-6
 
 
 class CriticalityIndexer:
-
     """
     Robust Criticality Indexer (v1.5)
 
@@ -30,9 +28,7 @@ class CriticalityIndexer:
 
     def __init__(self):
 
-        logger.info(
-            "CriticalityIndexer initialised"
-        )
+        logger.info("CriticalityIndexer initialised")
 
     # -------------------------------------------------------------
     # Main compute
@@ -76,51 +72,28 @@ class CriticalityIndexer:
             "Lumpy": 0.3,
         }
 
-        out["abc_score"] = (
-            out["abc_class"]
-            .map(abc_map)
-            .fillna(0.5)
-        )
+        out["abc_score"] = out["abc_class"].map(abc_map).fillna(0.5)
 
-        out["ved_score"] = (
-            out["ved_class"]
-            .map(ved_map)
-            .fillna(0.5)
-        )
+        out["ved_score"] = out["ved_class"].map(ved_map).fillna(0.5)
 
-        out["fns_score"] = (
-            out["fns_class"]
-            .map(fns_map)
-            .fillna(0.5)
-        )
+        out["fns_score"] = out["fns_class"].map(fns_map).fillna(0.5)
 
         # ---------------------------------------------------------
         # Robust log-LTR scaling
         # ---------------------------------------------------------
 
-        ltr = np.log1p(
-            out["ltr_score"]
-            .astype(float)
-            .fillna(0.5)
-        )
+        ltr = np.log1p(out["ltr_score"].astype(float).fillna(0.5))
 
-        median_ltr = float(
-            ltr.median()
-        )
+        median_ltr = float(ltr.median())
 
-        iqr_ltr = float(
-            ltr.quantile(0.75)
-            - ltr.quantile(0.25)
-        )
+        iqr_ltr = float(ltr.quantile(0.75) - ltr.quantile(0.25))
 
         iqr_ltr = max(
             iqr_ltr,
             EPSILON,
         )
 
-        robust_ltr = (
-            ltr - median_ltr
-        ) / iqr_ltr
+        robust_ltr = (ltr - median_ltr) / iqr_ltr
 
         robust_ltr = np.clip(
             robust_ltr,
@@ -128,23 +101,15 @@ class CriticalityIndexer:
             3,
         )
 
-        robust_ltr = (
-            robust_ltr + 3
-        ) / 6
+        robust_ltr = (robust_ltr + 3) / 6
 
-        robust_ltr = robust_ltr.fillna(
-            0.5
-        )
+        robust_ltr = robust_ltr.fillna(0.5)
 
         # ---------------------------------------------------------
         # Geo-risk scaling
         # ---------------------------------------------------------
 
-        geo = np.log1p(
-            out["geo_risk_score"]
-            .astype(float)
-            .fillna(0.5)
-        )
+        geo = np.log1p(out["geo_risk_score"].astype(float).fillna(0.5))
 
         geo = np.clip(
             geo,
@@ -157,15 +122,10 @@ class CriticalityIndexer:
         # ---------------------------------------------------------
 
         out["ci_score"] = (
-
             0.25 * out["abc_score"]
-
             + 0.25 * out["ved_score"]
-
             + 0.15 * out["fns_score"]
-
             + 0.20 * robust_ltr
-
             + 0.15 * geo
         )
 
@@ -175,47 +135,26 @@ class CriticalityIndexer:
         # automatically becomes CRITICAL
         # ---------------------------------------------------------
 
-        if (
-            "alternative_sourcing_required"
-            in out.columns
-        ):
+        if "alternative_sourcing_required" in out.columns:
 
-            alt_mask = (
-                out[
-                    "alternative_sourcing_required"
-                ]
-            )
+            alt_mask = out["alternative_sourcing_required"]
 
-            out.loc[
-                alt_mask,
-                "ci_score"
-            ] = 1.0
+            out.loc[alt_mask, "ci_score"] = 1.0
 
         # ---------------------------------------------------------
         # NaN firewall
         # ---------------------------------------------------------
 
-        nan_mask = (
-            out["ci_score"]
-            .isna()
-        )
+        nan_mask = out["ci_score"].isna()
 
         if nan_mask.any():
 
             logger.warning(
-                (
-                    "NaN CI detected | "
-                    "fallback=%d"
-                ),
-                int(
-                    nan_mask.sum()
-                ),
+                ("NaN CI detected | " "fallback=%d"),
+                int(nan_mask.sum()),
             )
 
-            out.loc[
-                nan_mask,
-                "ci_score"
-            ] = 0.95
+            out.loc[nan_mask, "ci_score"] = 0.95
 
         # ---------------------------------------------------------
         # Final clipping
@@ -249,19 +188,9 @@ class CriticalityIndexer:
                 "high=%d | "
                 "critical=%d"
             ),
-            float(
-                out["ci_score"].mean()
-            ),
-            int(
-                (
-                    out["ci_score"] > 0.7
-                ).sum()
-            ),
-            int(
-                (
-                    out["ci_score"] == 1.0
-                ).sum()
-            ),
+            float(out["ci_score"].mean()),
+            int((out["ci_score"] > 0.7).sum()),
+            int((out["ci_score"] == 1.0).sum()),
         )
 
         return out
@@ -287,15 +216,8 @@ class CriticalityIndexer:
 
         if missing:
 
-            raise ValueError(
-                (
-                    "Missing columns: "
-                    f"{missing}"
-                )
-            )
+            raise ValueError(("Missing columns: " f"{missing}"))
 
         if df.empty:
 
-            raise ValueError(
-                "Empty dataframe"
-            )
+            raise ValueError("Empty dataframe")

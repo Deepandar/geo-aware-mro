@@ -1,6 +1,7 @@
 import logging
 import sys
 
+
 def setup_logger(name: str):
 
     logger = logging.getLogger(name)
@@ -10,9 +11,7 @@ def setup_logger(name: str):
 
     logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
-    )
+    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
 
     handler = logging.StreamHandler(sys.stdout)
 

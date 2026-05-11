@@ -72,6 +72,7 @@ V1_1_SCHEMA = (
     + NEWSVENDOR_COLS
 )
 
+
 # ── Validation helper ────────────────────────────────────────────────────────
 def validate_columns(df, required: list, caller: str = "unknown") -> None:
     """Raise ValueError listing missing columns with caller context."""

@@ -35,13 +35,9 @@ class PushPullEngine:
         push_weight: float = 0.60,
     ):
 
-        self.push_density_threshold = (
-            push_density_threshold
-        )
+        self.push_density_threshold = push_density_threshold
 
-        self.pull_rul_threshold = (
-            pull_rul_threshold
-        )
+        self.pull_rul_threshold = pull_rul_threshold
 
         self.push_weight = push_weight
 
@@ -55,24 +51,16 @@ class PushPullEngine:
     ):
 
         required = {
-
             "item_id",
-
             "equipment_density_score",
-
             "rul_signal",
         }
 
-        missing = (
-            required -
-            set(df.columns)
-        )
+        missing = required - set(df.columns)
 
         if missing:
 
-            raise ValueError(
-                f"Missing columns: {missing}"
-            )
+            raise ValueError(f"Missing columns: {missing}")
 
     # -----------------------------------------------------
     # MAIN COMPUTE
@@ -101,17 +89,9 @@ class PushPullEngine:
 
         for _, row in out.iterrows():
 
-            density = float(
-                row[
-                    "equipment_density_score"
-                ]
-            )
+            density = float(row["equipment_density_score"])
 
-            rul = float(
-                row[
-                    "rul_signal"
-                ]
-            )
+            rul = float(row["rul_signal"])
 
             depot = str(
                 row.get(
@@ -130,47 +110,26 @@ class PushPullEngine:
                 )
             )
 
-            push = (
-                density >
-                self.push_density_threshold
-            )
+            push = density > self.push_density_threshold
 
-            pull = (
-                rul <
-                self.pull_rul_threshold
-            )
+            pull = rul < self.pull_rul_threshold
 
-            push_qty = (
-                base_stock *
-                self.push_weight
-                if push
-                else 0.0
-            )
+            push_qty = base_stock * self.push_weight if push else 0.0
 
             if pull:
 
                 urgency = max(
                     0.0,
-                    1.0 -
-                    (
-                        rul /
-                        self.pull_rul_threshold
-                    ),
+                    1.0 - (rul / self.pull_rul_threshold),
                 )
 
-                pull_qty = (
-                    base_stock *
-                    urgency
-                )
+                pull_qty = base_stock * urgency
 
             else:
 
                 pull_qty = 0.0
 
-            total = (
-                push_qty +
-                pull_qty
-            )
+            total = push_qty + pull_qty
 
             # ---------------------------------------------
             # MODE LOGIC
@@ -200,30 +159,19 @@ class PushPullEngine:
 
                 codp = "Rear"
 
-            rationale = (
-                f"density={density:.2f} | "
-                f"RUL={rul:.1f}"
-            )
+            rationale = f"density={density:.2f} | " f"RUL={rul:.1f}"
 
             modes.append(mode)
 
-            pushes.append(
-                round(push_qty, 2)
-            )
+            pushes.append(round(push_qty, 2))
 
-            pulls.append(
-                round(pull_qty, 2)
-            )
+            pulls.append(round(pull_qty, 2))
 
-            totals.append(
-                round(total, 2)
-            )
+            totals.append(round(total, 2))
 
             codps.append(codp)
 
-            rationales.append(
-                rationale
-            )
+            rationales.append(rationale)
 
         out["decoupling_mode"] = modes
 
@@ -237,22 +185,11 @@ class PushPullEngine:
 
         out["pp_rationale"] = rationales
 
-        out["pull_justified"] = (
-            out["pull_qty"] > 0
-        )
+        out["pull_justified"] = out["pull_qty"] > 0
 
         logger.info(
-            "PushPullEngine complete | "
-            "Push+Pull=%d",
-            int(
-                (
-                    out[
-                        "decoupling_mode"
-                    ]
-                    ==
-                    "Push+Pull"
-                ).sum()
-            ),
+            "PushPullEngine complete | " "Push+Pull=%d",
+            int((out["decoupling_mode"] == "Push+Pull").sum()),
         )
 
         return out

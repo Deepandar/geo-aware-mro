@@ -84,13 +84,9 @@ class DecisionTreeQualifier:
 
         self.max_depth = max_depth
 
-        self.min_samples_leaf = (
-            min_samples_leaf
-        )
+        self.min_samples_leaf = min_samples_leaf
 
-        self.random_state = (
-            random_state
-        )
+        self.random_state = random_state
 
         self.model = None
 
@@ -98,9 +94,7 @@ class DecisionTreeQualifier:
 
         self.le = LabelEncoder()
 
-        logger.info(
-            "DecisionTreeQualifier initialised"
-        )
+        logger.info("DecisionTreeQualifier initialised")
 
     # -----------------------------------------------------
     # Features
@@ -111,9 +105,7 @@ class DecisionTreeQualifier:
         df: pd.DataFrame,
     ) -> pd.DataFrame:
 
-        feats = pd.DataFrame(
-            index=df.index
-        )
+        feats = pd.DataFrame(index=df.index)
 
         feats["geo_risk_score"] = (
             df.get(
@@ -124,29 +116,14 @@ class DecisionTreeQualifier:
             .clip(0.0, 1.0)
         )
 
-        lt = (
-            df["lead_time_days"]
-            .fillna(30)
-            .clip(lower=1)
-        )
+        lt = df["lead_time_days"].fillna(30).clip(lower=1)
 
-        lt_std = (
-            df.get(
-                "std_lead_time",
-                lt * 0.2,
-            )
-            .fillna(
-                lt * 0.2
-            )
-        )
+        lt_std = df.get(
+            "std_lead_time",
+            lt * 0.2,
+        ).fillna(lt * 0.2)
 
-        feats["lead_time_cv"] = (
-            (
-                lt_std / lt
-            )
-            .clip(0.0, 2.0)
-            / 2.0
-        )
+        feats["lead_time_cv"] = (lt_std / lt).clip(0.0, 2.0) / 2.0
 
         feats["hhi_score"] = (
             df.get(
@@ -157,19 +134,12 @@ class DecisionTreeQualifier:
             .clip(0.0, 1.0)
         )
 
-        if (
-            "supply_origin_country"
-            in df.columns
-        ):
+        if "supply_origin_country" in df.columns:
 
             feats["sanctions_flag"] = (
-                df[
-                    "supply_origin_country"
-                ]
+                df["supply_origin_country"]
                 .str.upper()
-                .isin(
-                    self.HIGH_RISK_COUNTRIES
-                )
+                .isin(self.HIGH_RISK_COUNTRIES)
                 .astype(float)
             )
 
@@ -177,19 +147,16 @@ class DecisionTreeQualifier:
 
             feats["sanctions_flag"] = 0.0
 
-        feats["ved_score"] = (
-            df.get(
-                "ved_score",
-                df[
-                    "ved_class"
-                ].map({
+        feats["ved_score"] = df.get(
+            "ved_score",
+            df["ved_class"].map(
+                {
                     "V": 1.0,
                     "E": 0.5,
                     "D": 0.0,
-                }),
-            )
-            .fillna(0.5)
-        )
+                }
+            ),
+        ).fillna(0.5)
 
         feats["ltr_score"] = (
             df.get(
@@ -209,9 +176,7 @@ class DecisionTreeQualifier:
             .clip(0.0, 1.0)
         )
 
-        self.feature_names = (
-            list(feats.columns)
-        )
+        self.feature_names = list(feats.columns)
 
         return feats
 
@@ -231,53 +196,25 @@ class DecisionTreeQualifier:
             dtype=str,
         )
 
-        geo = feats[
-            "geo_risk_score"
-        ]
+        geo = feats["geo_risk_score"]
 
-        hhi = feats[
-            "hhi_score"
-        ]
+        hhi = feats["hhi_score"]
 
-        ved = feats[
-            "ved_score"
-        ]
+        ved = feats["ved_score"]
 
-        sxn = feats[
-            "sanctions_flag"
-        ]
+        sxn = feats["sanctions_flag"]
 
-        low_mask = (
-            (geo < 0.20)
-            & (hhi < 0.30)
-            & (sxn == 0)
-        )
+        low_mask = (geo < 0.20) & (hhi < 0.30) & (sxn == 0)
 
-        labels[
-            low_mask
-        ] = "Low"
+        labels[low_mask] = "Low"
 
-        high_mask = (
-            (geo > 0.40)
-            | (hhi > 0.60)
-            | (sxn == 1)
-        )
+        high_mask = (geo > 0.40) | (hhi > 0.60) | (sxn == 1)
 
-        labels[
-            high_mask
-        ] = "High"
+        labels[high_mask] = "High"
 
-        critical_mask = (
-            (ved == 1.0)
-            & (
-                (geo > 0.55)
-                | (sxn == 1)
-            )
-        )
+        critical_mask = (ved == 1.0) & ((geo > 0.55) | (sxn == 1))
 
-        labels[
-            critical_mask
-        ] = "Critical"
+        labels[critical_mask] = "Critical"
 
         return labels
 
@@ -290,9 +227,7 @@ class DecisionTreeQualifier:
         df: pd.DataFrame,
     ) -> QualificationResult:
 
-        feats = self._build_features(
-            df
-        )
+        feats = self._build_features(df)
 
         labels = self._generate_labels(
             df,
@@ -303,25 +238,20 @@ class DecisionTreeQualifier:
 
         y = labels.values
 
-        y_enc = self.le.fit_transform(
-            y
-        )
+        y_enc = self.le.fit_transform(y)
 
         param_grid = {
-
             "max_depth": [
                 3,
                 4,
                 5,
                 6,
             ],
-
             "min_samples_leaf": [
                 3,
                 5,
                 8,
             ],
-
             "criterion": [
                 "gini",
                 "entropy",
@@ -334,9 +264,7 @@ class DecisionTreeQualifier:
             random_state=self.random_state,
         )
 
-        dt = DecisionTreeClassifier(
-            random_state=self.random_state
-        )
+        dt = DecisionTreeClassifier(random_state=self.random_state)
 
         gs = GridSearchCV(
             dt,
@@ -374,31 +302,14 @@ class DecisionTreeQualifier:
         dist = labels.value_counts()
 
         return QualificationResult(
-
             n_skus=len(df),
-
-            n_low=int(
-                dist.get("Low", 0)
-            ),
-
-            n_medium=int(
-                dist.get("Medium", 0)
-            ),
-
-            n_high=int(
-                dist.get("High", 0)
-            ),
-
-            n_critical=int(
-                dist.get("Critical", 0)
-            ),
-
+            n_low=int(dist.get("Low", 0)),
+            n_medium=int(dist.get("Medium", 0)),
+            n_high=int(dist.get("High", 0)),
+            n_critical=int(dist.get("Critical", 0)),
             top_features=importances[:5],
-
             tree_depth=self.model.get_depth(),
-
             best_params=gs.best_params_,
-
             classification_report=report,
         )
 
@@ -413,58 +324,30 @@ class DecisionTreeQualifier:
 
         if self.model is None:
 
-            raise RuntimeError(
-                "DecisionTreeQualifier: fit() first."
-            )
+            raise RuntimeError("DecisionTreeQualifier: fit() first.")
 
         out = df.copy()
 
-        feats = self._build_features(
-            out
-        )
+        feats = self._build_features(out)
 
         X = feats.values
 
         y_enc = self.model.predict(X)
 
-        labels = (
-            self.le.inverse_transform(
-                y_enc
-            )
-        )
+        labels = self.le.inverse_transform(y_enc)
 
-        out[
-            "supplier_risk_class"
-        ] = labels
+        out["supplier_risk_class"] = labels
 
-        out[
-            "supplier_risk_score"
-        ] = [
-
+        out["supplier_risk_score"] = [
             RISK_SCORE_MAP.get(
                 lbl,
                 0.5,
             )
-
             for lbl in labels
         ]
 
-        out[
-            "procurement_flag"
-        ] = (
-            (
-                out[
-                    "supplier_risk_class"
-                ]
-                == "Critical"
-            )
-            &
-            (
-                out[
-                    "ved_class"
-                ]
-                == "V"
-            )
+        out["procurement_flag"] = (out["supplier_risk_class"] == "Critical") & (
+            out["ved_class"] == "V"
         )
 
         return out
@@ -494,9 +377,7 @@ class DecisionTreeQualifier:
 
         if self.model is None:
 
-            return (
-                "Model not fitted."
-            )
+            return "Model not fitted."
 
         return export_text(
             self.model,
@@ -508,15 +389,10 @@ class DecisionTreeQualifier:
     # -----------------------------------------------------
 
     def log_to_mlflow(
-
         self,
-
         df,
-
         result,
-
         run_name="supplier_qualification_v1.1",
-
     ):
 
         with mlflow.start_run(
@@ -531,9 +407,7 @@ class DecisionTreeQualifier:
 
             mlflow.log_param(
                 "best_params",
-                str(
-                    result.best_params
-                ),
+                str(result.best_params),
             )
 
             mlflow.log_metric(

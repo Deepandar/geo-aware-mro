@@ -7,12 +7,10 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
 
 
 class LTRScorer:
-
     """
     Compound Lead-Time Risk Scorer (v1.5)
 
@@ -37,20 +35,12 @@ class LTRScorer:
 
         self.hhi_weight = hhi_weight
 
-        self.location_weight = (
-            location_weight
-        )
+        self.location_weight = location_weight
 
-        self.leadtime_weight = (
-            leadtime_weight
-        )
+        self.leadtime_weight = leadtime_weight
 
         logger.info(
-            (
-                "LTRScorer initialised | "
-                "geo=%.2f | "
-                "hhi=%.2f"
-            ),
+            ("LTRScorer initialised | " "geo=%.2f | " "hhi=%.2f"),
             self.geo_weight,
             self.hhi_weight,
         )
@@ -84,14 +74,9 @@ class LTRScorer:
 
             df["location_score"] = 0.5
 
-        if (
-            "resilience_multiplier"
-            not in df.columns
-        ):
+        if "resilience_multiplier" not in df.columns:
 
-            df[
-                "resilience_multiplier"
-            ] = 1.0
+            df["resilience_multiplier"] = 1.0
 
         # -----------------------------------------------------
         # Safe lead-time handling
@@ -102,12 +87,7 @@ class LTRScorer:
         # -----------------------------------------------------
 
         lead_time = (
-            df["lead_time_days"]
-            .fillna(
-                df["lead_time_days"]
-                .median()
-            )
-            .astype(float)
+            df["lead_time_days"].fillna(df["lead_time_days"].median()).astype(float)
         )
 
         lead_time = np.nan_to_num(
@@ -126,37 +106,21 @@ class LTRScorer:
         # Structural components
         # -----------------------------------------------------
 
-        geo_component = (
-            df["geo_risk_score"]
-            .astype(float)
-            .fillna(0.0)
-        )
+        geo_component = df["geo_risk_score"].astype(float).fillna(0.0)
 
-        hhi_component = (
-            df["hhi_score"]
-            .astype(float)
-            .fillna(0.0)
-        )
+        hhi_component = df["hhi_score"].astype(float).fillna(0.0)
 
-        location_component = (
-            df["location_score"]
-            .astype(float)
-            .fillna(0.5)
-        )
+        location_component = df["location_score"].astype(float).fillna(0.5)
 
         # -----------------------------------------------------
         # Robust lead-time normalization
         # -----------------------------------------------------
 
-                # -----------------------------------------------------
+        # -----------------------------------------------------
         # Robust percentile estimation
         # -----------------------------------------------------
 
-        clean_lt = lead_time[
-            np.isfinite(
-                lead_time
-            )
-        ]
+        clean_lt = lead_time[np.isfinite(lead_time)]
 
         p5 = float(
             np.percentile(
@@ -172,41 +136,28 @@ class LTRScorer:
             )
         )
 
-        spread = (
-            p95 - p5
-        )
+        spread = p95 - p5
 
-        denom = (
-            spread
-            if spread > 1e-6
-            else 1.0
-        )
+        denom = spread if spread > 1e-6 else 1.0
 
         lead_component = (
-            (
-                np.clip(
-                    lead_time,
-                    p5,
-                    p95,
-                )
-                - p5
+            np.clip(
+                lead_time,
+                p5,
+                p95,
             )
-            / denom
-        )
+            - p5
+        ) / denom
 
         # -----------------------------------------------------
         # Base structural LTR
         # -----------------------------------------------------
 
         base_ltr = (
-            self.geo_weight
-            * geo_component
-            + self.hhi_weight
-            * hhi_component
-            + self.location_weight
-            * location_component
-            + self.leadtime_weight
-            * lead_component
+            self.geo_weight * geo_component
+            + self.hhi_weight * hhi_component
+            + self.location_weight * location_component
+            + self.leadtime_weight * lead_component
         )
 
         base_ltr = np.clip(
@@ -219,29 +170,15 @@ class LTRScorer:
         # Dynamic disruption amplification
         # -----------------------------------------------------
 
-        resilience = (
-            df[
-                "resilience_multiplier"
-            ]
-            .astype(float)
-            .fillna(1.0)
-        )
+        resilience = df["resilience_multiplier"].astype(float).fillna(1.0)
 
-        dynamic_multiplier = (
-            1.0
-            + (
-                resilience - 1.0
-            ) * 0.35
-        )
+        dynamic_multiplier = 1.0 + (resilience - 1.0) * 0.35
 
         # -----------------------------------------------------
         # Final compound LTR
         # -----------------------------------------------------
 
-        df["ltr_score"] = (
-            base_ltr
-            * dynamic_multiplier
-        )
+        df["ltr_score"] = base_ltr * dynamic_multiplier
 
         # -----------------------------------------------------
         # Final sanitation
@@ -276,23 +213,10 @@ class LTRScorer:
         )
 
         logger.info(
-            (
-                "LTR scoring complete | "
-                "mean=%.3f | "
-                "std=%.3f | "
-                "nan_count=%d"
-            ),
-            float(
-                df["ltr_score"].mean()
-            ),
-            float(
-                df["ltr_score"].std()
-            ),
-            int(
-                df["ltr_score"]
-                .isna()
-                .sum()
-            ),
+            ("LTR scoring complete | " "mean=%.3f | " "std=%.3f | " "nan_count=%d"),
+            float(df["ltr_score"].mean()),
+            float(df["ltr_score"].std()),
+            int(df["ltr_score"].isna().sum()),
         )
 
         return df
@@ -310,25 +234,12 @@ class LTRScorer:
             "lead_time_days",
         }
 
-        missing = (
-            required
-            - set(df.columns)
-        )
+        missing = required - set(df.columns)
 
         if missing:
 
-            raise ValueError(
-                (
-                    "LTRScorer missing "
-                    f"columns: {missing}"
-                )
-            )
+            raise ValueError(("LTRScorer missing " f"columns: {missing}"))
 
         if df.empty:
 
-            raise ValueError(
-                (
-                    "LTRScorer received "
-                    "empty dataframe"
-                )
-            )
+            raise ValueError(("LTRScorer received " "empty dataframe"))

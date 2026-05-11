@@ -45,20 +45,12 @@ class DominanceChecker:
 
         top_n = max(1, int(len(df) * self.top_pct))
 
-        concentration_ratio = (
-            sorted_df.head(top_n)[acv_col].sum()
-            / total
-        )
+        concentration_ratio = sorted_df.head(top_n)[acv_col].sum() / total
 
-        bias_detected = (
-            concentration_ratio >= self.dominance_threshold
-        )
+        bias_detected = concentration_ratio >= self.dominance_threshold
 
         if bias_detected:
-            print(
-                f"⚠ DOMINANCE DETECTED: "
-                f"{concentration_ratio:.2%}"
-            )
+            print(f"⚠ DOMINANCE DETECTED: " f"{concentration_ratio:.2%}")
 
             df["acv_for_abc"] = np.log1p(df[acv_col])
 

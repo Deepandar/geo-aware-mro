@@ -35,24 +35,17 @@ COUNTRY_PRIORS: dict[str, tuple[float, float]] = {
 
 class BayesianRiskScorer:
 
-    def __init__(
-        self,
-        config_path: str | Path = "config/criticality_config.yaml"
-    ):
+    def __init__(self, config_path: str | Path = "config/criticality_config.yaml"):
 
         with open(config_path) as f:
             cfg = yaml.safe_load(f)["criticality_index"]
 
         ltr_cfg = cfg.get("ltr", {})
 
-        self.use_geo_risk = ltr_cfg.get(
-            "use_geo_risk",
-            True
-        )
+        self.use_geo_risk = ltr_cfg.get("use_geo_risk", True)
 
         logger.info(
-            "BayesianRiskScorer initialised | use_geo_risk=%s",
-            self.use_geo_risk
+            "BayesianRiskScorer initialised | use_geo_risk=%s", self.use_geo_risk
         )
 
     # -----------------------------------------------------------------
@@ -73,9 +66,7 @@ class BayesianRiskScorer:
 
         for _, row in df.iterrows():
 
-            country = str(
-                row.get("supply_origin_country", "DEFAULT")
-            ).upper()
+            country = str(row.get("supply_origin_country", "DEFAULT")).upper()
 
             hhi = float(row.get("hhi_score", 0.3))
 
@@ -91,10 +82,9 @@ class BayesianRiskScorer:
         assert df["geo_risk_score"].between(0, 1).all()
 
         top_origin = (
-            df.groupby("supply_origin_country")["geo_risk_score"]
-            .mean()
-            .idxmax()
-            if not df.empty else "N/A"
+            df.groupby("supply_origin_country")["geo_risk_score"].mean().idxmax()
+            if not df.empty
+            else "N/A"
         )
 
         logger.info(
@@ -116,17 +106,14 @@ class BayesianRiskScorer:
         hhi: float,
     ) -> float:
 
-        alpha_0, beta_0 = COUNTRY_PRIORS.get(
-            country,
-            COUNTRY_PRIORS["DEFAULT"]
-        )
+        alpha_0, beta_0 = COUNTRY_PRIORS.get(country, COUNTRY_PRIORS["DEFAULT"])
 
         hhi_signal = float(np.clip(hhi, 0.0, 1.0))
 
         pseudo_obs = 5.0
 
         alpha_post = alpha_0 + pseudo_obs * hhi_signal
-        beta_post  = beta_0 + pseudo_obs * (1.0 - hhi_signal)
+        beta_post = beta_0 + pseudo_obs * (1.0 - hhi_signal)
 
         posterior = alpha_post / (alpha_post + beta_post)
 
@@ -145,9 +132,7 @@ class BayesianRiskScorer:
         missing = required - set(df.columns)
 
         if missing:
-            raise ValueError(
-                f"BayesianRiskScorer missing columns: {missing}"
-            )
+            raise ValueError(f"BayesianRiskScorer missing columns: {missing}")
 
     # -----------------------------------------------------------------
     # MLflow logging
@@ -169,17 +154,10 @@ class BayesianRiskScorer:
                 self.use_geo_risk,
             )
 
-            mlflow.log_metric(
-                "mean_geo_risk",
-                float(df["geo_risk_score"].mean())
-            )
+            mlflow.log_metric("mean_geo_risk", float(df["geo_risk_score"].mean()))
+
+            mlflow.log_metric("std_geo_risk", float(df["geo_risk_score"].std()))
 
             mlflow.log_metric(
-                "std_geo_risk",
-                float(df["geo_risk_score"].std())
-            )
-
-            mlflow.log_metric(
-                "high_risk_count",
-                int((df["geo_risk_score"] > 0.7).sum())
+                "high_risk_count", int((df["geo_risk_score"] > 0.7).sum())
             )

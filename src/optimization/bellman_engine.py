@@ -7,7 +7,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -45,9 +44,7 @@ class BellmanEngine:
         # Approximate value table
         # -----------------------------------------------------
 
-        self.value_table = np.zeros(
-            self.max_inventory + 1
-        )
+        self.value_table = np.zeros(self.max_inventory + 1)
 
         logger.info(
             (
@@ -91,9 +88,7 @@ class BellmanEngine:
                 )
             )
 
-            mean_demand = float(
-                row["mean_demand"]
-            )
+            mean_demand = float(row["mean_demand"])
 
             std_demand = float(
                 row.get(
@@ -102,17 +97,11 @@ class BellmanEngine:
                 )
             )
 
-            lead_time = float(
-                row["lead_time_days"]
-            )
+            lead_time = float(row["lead_time_days"])
 
-            ci_score = float(
-                row["ci_score"]
-            )
+            ci_score = float(row["ci_score"])
 
-            geo_risk = float(
-                row["geo_risk_score"]
-            )
+            geo_risk = float(row["geo_risk_score"])
 
             # -------------------------------------------------
             # Cap lead times
@@ -129,9 +118,7 @@ class BellmanEngine:
             # -------------------------------------------------
 
             effective_stockout = (
-                self.stockout_cost
-                * (1.0 + ci_score)
-                * (1.0 + geo_risk)
+                self.stockout_cost * (1.0 + ci_score) * (1.0 + geo_risk)
             )
 
             best_q = 0
@@ -152,15 +139,9 @@ class BellmanEngine:
                 # Stochastic demand sample
                 # ---------------------------------------------
 
-                sampled_demand = np.random.poisson(
-                    max(mean_demand, 1)
-                )
+                sampled_demand = np.random.poisson(max(mean_demand, 1))
 
-                next_inventory = (
-                    inventory_state
-                    + q
-                    - sampled_demand
-                )
+                next_inventory = inventory_state + q - sampled_demand
 
                 # ---------------------------------------------
                 # Bounded state space
@@ -172,51 +153,29 @@ class BellmanEngine:
                     self.max_inventory,
                 )
 
-                next_inventory_idx = int(
-                    next_inventory
-                )
+                next_inventory_idx = int(next_inventory)
 
                 # ---------------------------------------------
                 # Immediate costs
                 # ---------------------------------------------
 
-                holding = (
-                    self.holding_cost
-                    * max(
-                        next_inventory,
-                        0,
-                    )
+                holding = self.holding_cost * max(
+                    next_inventory,
+                    0,
                 )
 
-                shortage = (
-                    effective_stockout
-                    * max(
-                        sampled_demand
-                        - (
-                            inventory_state
-                            + q
-                        ),
-                        0,
-                    )
+                shortage = effective_stockout * max(
+                    sampled_demand - (inventory_state + q),
+                    0,
                 )
 
                 # ---------------------------------------------
                 # Approximate Bellman recursion
                 # ---------------------------------------------
 
-                future_cost = (
-                    self.beta
-                    * self.value_table[
-                        next_inventory_idx
-                    ]
-                )
+                future_cost = self.beta * self.value_table[next_inventory_idx]
 
-                total_cost = (
-                    q
-                    + holding
-                    + shortage
-                    + future_cost
-                )
+                total_cost = q + holding + shortage + future_cost
 
                 if total_cost < best_cost:
 
@@ -230,28 +189,13 @@ class BellmanEngine:
 
             z = 1.65
 
-            mean_lt_demand = (
-                mean_demand
-                * lead_time
-            )
+            mean_lt_demand = mean_demand * lead_time
 
-            std_lt_demand = (
-                np.sqrt(lead_time)
-                * std_demand
-            )
+            std_lt_demand = np.sqrt(lead_time) * std_demand
 
-            dynamic_rop = (
-                mean_lt_demand
-                + (
-                    z
-                    * std_lt_demand
-                )
-            )
+            dynamic_rop = mean_lt_demand + (z * std_lt_demand)
 
-            dynamic_rop *= (
-                1.0
-                + (0.25 * ci_score)
-            )
+            dynamic_rop *= 1.0 + (0.25 * ci_score)
 
             # -------------------------------------------------
             # Cap extreme ROPs
@@ -267,23 +211,13 @@ class BellmanEngine:
             # Store results
             # -------------------------------------------------
 
-            q_star.append(
-                float(best_q)
-            )
+            q_star.append(float(best_q))
 
-            rop.append(
-                float(dynamic_rop)
-            )
+            rop.append(float(dynamic_rop))
 
-            expected_cost.append(
-                float(best_cost)
-            )
+            expected_cost.append(float(best_cost))
 
-            state_value.append(
-                float(
-                    -best_cost
-                )
-            )
+            state_value.append(float(-best_cost))
 
         # -----------------------------------------------------
         # Output columns
@@ -293,32 +227,20 @@ class BellmanEngine:
 
         out["bellman_rop"] = rop
 
-        out["expected_future_cost"] = (
-            expected_cost
-        )
+        out["expected_future_cost"] = expected_cost
 
-        out["state_value"] = (
-            state_value
-        )
+        out["state_value"] = state_value
 
         # -----------------------------------------------------
         # Backward compatibility
         # -----------------------------------------------------
 
-        out["q_star"] = (
-            out["bellman_q_star"]
-        )
+        out["q_star"] = out["bellman_q_star"]
 
-        out["rop"] = (
-            out["bellman_rop"]
-        )
+        out["rop"] = out["bellman_rop"]
 
         logger.info(
-            (
-                "Bellman optimisation complete | "
-                "mean_q=%.2f | "
-                "mean_rop=%.2f"
-            ),
+            ("Bellman optimisation complete | " "mean_q=%.2f | " "mean_rop=%.2f"),
             out["q_star"].mean(),
             out["rop"].mean(),
         )
@@ -341,16 +263,8 @@ class BellmanEngine:
             "geo_risk_score",
         }
 
-        missing = (
-            required
-            - set(df.columns)
-        )
+        missing = required - set(df.columns)
 
         if missing:
 
-            raise ValueError(
-                (
-                    "BellmanEngine missing "
-                    f"columns: {missing}"
-                )
-            )
+            raise ValueError(("BellmanEngine missing " f"columns: {missing}"))

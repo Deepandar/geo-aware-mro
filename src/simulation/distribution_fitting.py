@@ -35,6 +35,7 @@ CANDIDATE_DISTS = {
 # Fit result
 # =========================================================
 
+
 @dataclass
 class FitResult:
 
@@ -52,6 +53,7 @@ class FitResult:
 # Distribution fitter
 # =========================================================
 
+
 class DistributionFitter:
 
     def __init__(
@@ -64,19 +66,13 @@ class DistributionFitter:
             dtype=float,
         )
 
-        data = data[
-            np.isfinite(data)
-        ]
+        data = data[np.isfinite(data)]
 
-        data = data[
-            data > 0
-        ]
+        data = data[data > 0]
 
         if len(data) < 5:
 
-            raise ValueError(
-                "Need at least 5 observations"
-            )
+            raise ValueError("Need at least 5 observations")
 
         self.data = data
 
@@ -89,9 +85,7 @@ class DistributionFitter:
         dist_name: str,
     ) -> FitResult | None:
 
-        dist = CANDIDATE_DISTS[
-            dist_name
-        ]
+        dist = CANDIDATE_DISTS[dist_name]
 
         try:
 
@@ -109,32 +103,19 @@ class DistributionFitter:
 
             k = len(params)
 
-            aic = (
-                2 * k
-                - 2 * log_lik
+            aic = 2 * k - 2 * log_lik
+
+            ks_stat, ks_p = kstest(
+                self.data,
+                dist.cdf,
+                args=params,
             )
 
-            ks_stat, ks_p = (
-                kstest(
-                    self.data,
-                    dist.cdf,
-                    args=params,
-                )
-            )
+            mean = dist.mean(*params)
 
-            mean = dist.mean(
-                *params
-            )
+            std = dist.std(*params)
 
-            std = dist.std(
-                *params
-            )
-
-            cv = (
-                std / mean
-                if mean > 0
-                else 0.0
-            )
+            cv = std / mean if mean > 0 else 0.0
 
             return FitResult(
                 dist_name=dist_name,
@@ -169,26 +150,17 @@ class DistributionFitter:
 
         for dist_name in CANDIDATE_DISTS:
 
-            result = self.fit_one(
-                dist_name
-            )
+            result = self.fit_one(dist_name)
 
             if result is not None:
 
-                results.append(
-                    result
-                )
+                results.append(result)
 
         if not results:
 
-            raise ValueError(
-                "No valid fits"
-            )
+            raise ValueError("No valid fits")
 
-        passed = [
-            r for r in results
-            if r.ks_pvalue > 0.05
-        ]
+        passed = [r for r in results if r.ks_pvalue > 0.05]
 
         if passed:
 
@@ -204,6 +176,7 @@ class DistributionFitter:
 # GLOBAL PORTFOLIO FIT
 # =========================================================
 
+
 def fit_global_distribution(
     df: pd.DataFrame,
     lt_col: str = "lead_time_days",
@@ -211,21 +184,14 @@ def fit_global_distribution(
 
     if lt_col not in df.columns:
 
-        raise ValueError(
-            f"{lt_col} missing"
-        )
+        raise ValueError(f"{lt_col} missing")
 
-    fitter = DistributionFitter(
-        df[lt_col].values
-    )
+    fitter = DistributionFitter(df[lt_col].values)
 
     best = fitter.best_fit()
 
     logger.info(
-        (
-            "Global distribution fitted | "
-            "dist=%s | p=%.4f"
-        ),
+        ("Global distribution fitted | " "dist=%s | p=%.4f"),
         best.dist_name,
         best.ks_pvalue,
     )

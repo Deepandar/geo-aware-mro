@@ -1,6 +1,7 @@
 import time
 from functools import wraps
 
+
 def track_timing(func):
 
     @wraps(func)

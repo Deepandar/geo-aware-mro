@@ -1,12 +1,9 @@
 import time
 
-from starlette.middleware.base import (
-    BaseHTTPMiddleware
-)
+from starlette.middleware.base import BaseHTTPMiddleware
 
-class RequestLoggingMiddleware(
-    BaseHTTPMiddleware
-):
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(
         self,

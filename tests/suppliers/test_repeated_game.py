@@ -2,9 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from src.suppliers.repeated_game import (
-    RepeatedGameModel
-)
+from src.suppliers.repeated_game import RepeatedGameModel
 
 
 @pytest.fixture
@@ -27,45 +25,39 @@ def base_df():
 
     n = 80
 
-    return pd.DataFrame({
-
-        "item_id":
-        [f"SKU{i:04d}" for i in range(n)],
-
-        "geo_risk_score":
-        np.random.uniform(
-            0,
-            1,
-            n,
-        ),
-
-        "supplier_risk_class":
-        np.random.choice(
-            [
-                "Low",
-                "Medium",
-                "High",
-                "Critical",
-            ],
-            n,
-            p=[
-                0.2,
-                0.4,
-                0.3,
-                0.1,
-            ],
-        ),
-
-        "ved_class":
-        np.random.choice(
-            [
-                "V",
-                "E",
-                "D",
-            ],
-            n,
-        ),
-    })
+    return pd.DataFrame(
+        {
+            "item_id": [f"SKU{i:04d}" for i in range(n)],
+            "geo_risk_score": np.random.uniform(
+                0,
+                1,
+                n,
+            ),
+            "supplier_risk_class": np.random.choice(
+                [
+                    "Low",
+                    "Medium",
+                    "High",
+                    "Critical",
+                ],
+                n,
+                p=[
+                    0.2,
+                    0.4,
+                    0.3,
+                    0.1,
+                ],
+            ),
+            "ved_class": np.random.choice(
+                [
+                    "V",
+                    "E",
+                    "D",
+                ],
+                n,
+            ),
+        }
+    )
 
 
 def test_score_adds_required_columns(
@@ -76,21 +68,14 @@ def test_score_adds_required_columns(
     out, rep = model.score(base_df)
 
     required = {
-
         "reputation_score",
-
         "grim_trigger_fired",
-
         "n_defections",
-
         "delta_satisfied",
-
         "recommended_action",
     }
 
-    assert required.issubset(
-        out.columns
-    )
+    assert required.issubset(out.columns)
 
 
 def test_reputation_range(
@@ -100,36 +85,23 @@ def test_reputation_range(
 
     out, _ = model.score(base_df)
 
-    assert out[
-        "reputation_score"
-    ].between(0, 1).all()
+    assert out["reputation_score"].between(0, 1).all()
 
 
 def test_folk_theorem(
     model,
 ):
 
-    ft = (
-        model.folk_theorem_summary()
-    )
+    ft = model.folk_theorem_summary()
 
-    assert (
-        ft[
-            "folk_theorem_satisfied"
-        ]
-        is True
-    )
+    assert ft["folk_theorem_satisfied"] is True
 
 
 def test_missing_item_id_raises(
     model,
 ):
 
-    bad = pd.DataFrame({
-
-        "geo_risk_score":
-        [0.5]
-    })
+    bad = pd.DataFrame({"geo_risk_score": [0.5]})
 
     with pytest.raises(ValueError):
 

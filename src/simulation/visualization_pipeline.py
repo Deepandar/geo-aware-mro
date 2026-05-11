@@ -7,13 +7,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
 
 
 # =========================================================
 # Visualization Pipeline
 # =========================================================
+
 
 class VisualizationPipeline:
 
@@ -22,9 +22,7 @@ class VisualizationPipeline:
         output_dir: str = "reports/figures",
     ):
 
-        self.output_dir = Path(
-            output_dir
-        )
+        self.output_dir = Path(output_dir)
 
         self.output_dir.mkdir(
             parents=True,
@@ -38,14 +36,10 @@ class VisualizationPipeline:
     def edge_of_chaos_plot(
         self,
         df: pd.DataFrame,
-        save_name: str = (
-            "edge_of_chaos.png"
-        ),
+        save_name: str = ("edge_of_chaos.png"),
     ) -> str:
 
-        fig, ax = plt.subplots(
-            figsize=(12, 8)
-        )
+        fig, ax = plt.subplots(figsize=(12, 8))
 
         scatter = ax.scatter(
             df["geo_risk_score"],
@@ -56,10 +50,7 @@ class VisualizationPipeline:
         )
 
         ax.set_title(
-            (
-                "Geo-Aware Digital Twin\n"
-                "Risk vs Operational Availability"
-            ),
+            ("Geo-Aware Digital Twin\n" "Risk vs Operational Availability"),
             fontsize=16,
         )
 
@@ -75,13 +66,9 @@ class VisualizationPipeline:
 
         ax.grid(True)
 
-        cbar = plt.colorbar(
-            scatter
-        )
+        cbar = plt.colorbar(scatter)
 
-        cbar.set_label(
-            "Criticality Index"
-        )
+        cbar.set_label("Criticality Index")
 
         # -------------------------------------------------
         # Quadrant annotations
@@ -115,10 +102,7 @@ class VisualizationPipeline:
             weight="bold",
         )
 
-        output_path = (
-            self.output_dir
-            / save_name
-        )
+        output_path = self.output_dir / save_name
 
         plt.savefig(
             output_path,
@@ -129,9 +113,7 @@ class VisualizationPipeline:
         plt.close()
 
         logger.info(
-            (
-                "Edge of Chaos plot saved | %s"
-            ),
+            ("Edge of Chaos plot saved | %s"),
             output_path,
         )
 
@@ -144,24 +126,16 @@ class VisualizationPipeline:
     def country_failure_plot(
         self,
         failed_df: pd.DataFrame,
-        save_name: str = (
-            "country_failure.png"
-        ),
+        save_name: str = ("country_failure.png"),
     ) -> str:
 
         counts = (
-            failed_df[
-                "supply_origin_country"
-            ]
+            failed_df["supply_origin_country"]
             .value_counts()
-            .sort_values(
-                ascending=False
-            )
+            .sort_values(ascending=False)
         )
 
-        fig, ax = plt.subplots(
-            figsize=(10, 6)
-        )
+        fig, ax = plt.subplots(figsize=(10, 6))
 
         counts.plot(
             kind="bar",
@@ -169,30 +143,20 @@ class VisualizationPipeline:
         )
 
         ax.set_title(
-            (
-                "Failed SKU Distribution\n"
-                "by Supply Origin"
-            ),
+            ("Failed SKU Distribution\n" "by Supply Origin"),
             fontsize=15,
         )
 
-        ax.set_xlabel(
-            "Country"
-        )
+        ax.set_xlabel("Country")
 
-        ax.set_ylabel(
-            "Failed SKU Count"
-        )
+        ax.set_ylabel("Failed SKU Count")
 
         ax.grid(
             axis="y",
             alpha=0.3,
         )
 
-        output_path = (
-            self.output_dir
-            / save_name
-        )
+        output_path = self.output_dir / save_name
 
         plt.savefig(
             output_path,
@@ -203,9 +167,7 @@ class VisualizationPipeline:
         plt.close()
 
         logger.info(
-            (
-                "Country failure plot saved | %s"
-            ),
+            ("Country failure plot saved | %s"),
             output_path,
         )
 

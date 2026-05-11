@@ -36,10 +36,7 @@ def list_registered_models():
         output.append(
             {
                 "name": model.name,
-                "latest_versions": [
-                    v.version
-                    for v in model.latest_versions
-                ],
+                "latest_versions": [v.version for v in model.latest_versions],
             }
         )
 

@@ -10,32 +10,36 @@ logger = logging.getLogger(__name__)
 
 try:
     import nashpy as nash
+
     NASHPY_AVAILABLE = True
 except ImportError:
     NASHPY_AVAILABLE = False
-    logger.warning(
-        "nashpy unavailable — fallback mode active"
-    )
+    logger.warning("nashpy unavailable — fallback mode active")
 
 
 # =========================================================
 # PAYOFF MATRICES
 # =========================================================
 
-PAYOFF_BUYER_2x2 = np.array([
-    [3.0, 1.0],
-    [4.0, 2.0],
-])
+PAYOFF_BUYER_2x2 = np.array(
+    [
+        [3.0, 1.0],
+        [4.0, 2.0],
+    ]
+)
 
-PAYOFF_SUPPLIER_2x2 = np.array([
-    [2.0, 4.0],
-    [1.0, 3.0],
-]).T
+PAYOFF_SUPPLIER_2x2 = np.array(
+    [
+        [2.0, 4.0],
+        [1.0, 3.0],
+    ]
+).T
 
 
 # =========================================================
 # RESULT DATACLASSES
 # =========================================================
+
 
 @dataclass
 class NashModelResult:
@@ -53,6 +57,7 @@ class NashModelResult:
 # MAIN MODEL
 # =========================================================
 
+
 class NashEquilibriumModel:
 
     def __init__(
@@ -67,10 +72,7 @@ class NashEquilibriumModel:
         self.buffer_stock_multiplier = buffer_stock_multiplier
 
         logger.info(
-            (
-                "NashEquilibriumModel initialised | "
-                "dual=%.2f | mandatory=%.2f"
-            ),
+            ("NashEquilibriumModel initialised | " "dual=%.2f | mandatory=%.2f"),
             dual_source_threshold,
             mandatory_threshold,
         )
@@ -118,9 +120,7 @@ class NashEquilibriumModel:
                     supplier_payoff,
                 )
 
-                equilibria = list(
-                    game.support_enumeration()
-                )
+                equilibria = list(game.support_enumeration())
 
                 if equilibria:
 
@@ -128,10 +128,7 @@ class NashEquilibriumModel:
 
                     ne_type = (
                         "Pure"
-                        if (
-                            np.max(buyer_mix) > 0.99
-                            or np.max(supp_mix) > 0.99
-                        )
+                        if (np.max(buyer_mix) > 0.99 or np.max(supp_mix) > 0.99)
                         else "Mixed"
                     )
 
@@ -150,15 +147,19 @@ class NashEquilibriumModel:
 
         # fallback
 
-        buyer_mix = np.array([
-            max(0.0, 1.0 - srs),
-            min(1.0, srs),
-        ])
+        buyer_mix = np.array(
+            [
+                max(0.0, 1.0 - srs),
+                min(1.0, srs),
+            ]
+        )
 
-        supp_mix = np.array([
-            min(1.0, 0.4 + srs),
-            max(0.0, 0.6 - srs),
-        ])
+        supp_mix = np.array(
+            [
+                min(1.0, 0.4 + srs),
+                max(0.0, 0.6 - srs),
+            ]
+        )
 
         return (
             "Mixed",
@@ -208,7 +209,7 @@ class NashEquilibriumModel:
                 )
             )
 
-            is_vital = (ved == "V")
+            is_vital = ved == "V"
 
             srs = self._compute_srs(
                 geo,
@@ -219,14 +220,9 @@ class NashEquilibriumModel:
 
             # sourcing strategy
 
-            if (
-                srs >= self.mandatory_threshold
-                and is_vital
-            ):
+            if srs >= self.mandatory_threshold and is_vital:
 
-                strategy = (
-                    "Dual-Source (Mandatory)"
-                )
+                strategy = "Dual-Source (Mandatory)"
 
             elif srs >= self.dual_source_threshold:
 
@@ -240,17 +236,11 @@ class NashEquilibriumModel:
 
             # nash equilibrium
 
-            ne_type, buyer_mix, supp_mix = (
-                self._compute_nash(
-                    srs
-                )
-            )
+            ne_type, buyer_mix, supp_mix = self._compute_nash(srs)
 
             ne_type_list.append(ne_type)
 
-            buffer_signal = float(
-                supp_mix[1]
-            ) * self.buffer_stock_multiplier
+            buffer_signal = float(supp_mix[1]) * self.buffer_stock_multiplier
 
             buffer_signal_list.append(
                 round(
@@ -259,117 +249,63 @@ class NashEquilibriumModel:
                 )
             )
 
-            ne_price = (
-                "H"
-                if supp_mix[0] >= 0.5
-                else "L"
-            )
+            ne_price = "H" if supp_mix[0] >= 0.5 else "L"
 
-            ne_price_list.append(
-                ne_price
-            )
+            ne_price_list.append(ne_price)
 
         # =================================================
         # OUTPUT COLUMNS
         # =================================================
 
-        out[
-            "strategic_risk_score"
-        ] = srs_list
+        out["strategic_risk_score"] = srs_list
 
-        out[
-            "sourcing_strategy"
-        ] = strategy_list
+        out["sourcing_strategy"] = strategy_list
 
-        out[
-            "ne_type"
-        ] = ne_type_list
+        out["ne_type"] = ne_type_list
 
-        out[
-            "buffer_stock_signal"
-        ] = buffer_signal_list
+        out["buffer_stock_signal"] = buffer_signal_list
 
-        out[
-            "ne_price_equilibrium"
-        ] = ne_price_list
+        out["ne_price_equilibrium"] = ne_price_list
 
-        out[
-            "dual_source_justified"
-        ] = out[
-            "sourcing_strategy"
-        ].str.startswith(
-            "Dual"
-        )
+        out["dual_source_justified"] = out["sourcing_strategy"].str.startswith("Dual")
 
         # backward compatibility
 
-        out[
-            "supplier_strategy"
-        ] = out[
-            "sourcing_strategy"
-        ]
+        out["supplier_strategy"] = out["sourcing_strategy"]
 
         # =================================================
         # AGGREGATE RESULTS
         # =================================================
 
-        dist = out[
-            "sourcing_strategy"
-        ].value_counts()
+        dist = out["sourcing_strategy"].value_counts()
 
         result = NashModelResult(
-
             n_skus=len(out),
-
             n_dual_source=int(
                 dist.get(
                     "Dual-Source",
                     0,
                 )
             ),
-
             n_dual_source_mandatory=int(
                 dist.get(
                     "Dual-Source (Mandatory)",
                     0,
                 )
             ),
-
             n_single_source=int(
                 dist.get(
                     "Single-Source",
                     0,
                 )
             ),
-
-            mean_strategic_risk=float(
-                out[
-                    "strategic_risk_score"
-                ].mean()
-            ),
-
-            pure_ne_count=int(
-                (
-                    out["ne_type"]
-                    == "Pure"
-                ).sum()
-            ),
-
-            mixed_ne_count=int(
-                (
-                    out["ne_type"]
-                    == "Mixed"
-                ).sum()
-            ),
+            mean_strategic_risk=float(out["strategic_risk_score"].mean()),
+            pure_ne_count=int((out["ne_type"] == "Pure").sum()),
+            mixed_ne_count=int((out["ne_type"] == "Mixed").sum()),
         )
 
         logger.info(
-            (
-                "Nash scoring complete | "
-                "Single=%d | "
-                "Dual=%d | "
-                "Mandatory=%d"
-            ),
+            ("Nash scoring complete | " "Single=%d | " "Dual=%d | " "Mandatory=%d"),
             result.n_single_source,
             result.n_dual_source,
             result.n_dual_source_mandatory,
@@ -391,31 +327,23 @@ class NashEquilibriumModel:
             "ved_class",
         }
 
-        missing = required - set(
-            df.columns
-        )
+        missing = required - set(df.columns)
 
         if missing:
 
-            raise ValueError(
-                (
-                    "NashEquilibriumModel "
-                    f"missing columns: {missing}"
-                )
-            )
+            raise ValueError(("NashEquilibriumModel " f"missing columns: {missing}"))
 
 
 # =========================================================
 # BACKWARD COMPATIBILITY WRAPPER
 # =========================================================
 
+
 class NashEquilibriumEngine:
 
     def __init__(self):
 
-        self.model = (
-            NashEquilibriumModel()
-        )
+        self.model = NashEquilibriumModel()
 
     def compute(
         self,

@@ -3,7 +3,6 @@ import pandas as pd
 
 from src.simulation.depot_sim import GeoAwareMROEnv
 
-
 DEFAULT_SCENARIOS = [
     "baseline",
     "sanctions",
@@ -64,61 +63,17 @@ class MonteCarloPipeline:
             mean_fill_rate = metrics["fill_rate"]
 
             row = {
-
-                "trial_id":
-                    trial_id,
-
-                "scenario":
-                    scenario,
-
-                "mean_fill_rate":
-                    float(mean_fill_rate),
-
-                "fill_rate_high":
-                    float(
-                        mean_fill_rate * 0.98
-                    ),
-
-                "fill_rate_medium":
-                    float(
-                        mean_fill_rate * 0.95
-                    ),
-
-                "fill_rate_low":
-                    float(
-                        mean_fill_rate * 0.90
-                    ),
-
-                "total_stockout_cost":
-                    float(
-                        metrics[
-                            "stockout_cost"
-                        ]
-                    ),
-
-                "tsl_compliance_rate":
-                    float(
-                        metrics[
-                            "tsl_compliance"
-                        ]
-                    ),
-
-                "cvs_fill_rate":
-                    float(
-                        mean_fill_rate
-                    ),
-
-                "cds_fill_rate":
-                    float(
-                        mean_fill_rate * 0.97
-                    ),
-
-                "cvs_fix_holds":
-                    bool(
-                        metrics[
-                            "cvs_fixed"
-                        ]
-                    ),
+                "trial_id": trial_id,
+                "scenario": scenario,
+                "mean_fill_rate": float(mean_fill_rate),
+                "fill_rate_high": float(mean_fill_rate * 0.98),
+                "fill_rate_medium": float(mean_fill_rate * 0.95),
+                "fill_rate_low": float(mean_fill_rate * 0.90),
+                "total_stockout_cost": float(metrics["stockout_cost"]),
+                "tsl_compliance_rate": float(metrics["tsl_compliance"]),
+                "cvs_fill_rate": float(mean_fill_rate),
+                "cds_fill_rate": float(mean_fill_rate * 0.97),
+                "cvs_fix_holds": bool(metrics["cvs_fixed"]),
             }
 
             results.append(row)

@@ -40,9 +40,7 @@ from src.classifiers.criticality_index import (
 
 def build_df():
 
-    df = generate_sku_master(
-        n_skus=100
-    )
+    df = generate_sku_master(n_skus=100)
 
     df = classify_abc(df)
 
@@ -108,10 +106,7 @@ def test_bellman_qstar_positive():
 
     result = engine.compute(df)
 
-    assert (
-        result["bellman_q_star"]
-        >= 0
-    ).all()
+    assert (result["bellman_q_star"] >= 0).all()
 
 
 def test_bellman_rop_positive():
@@ -122,10 +117,7 @@ def test_bellman_rop_positive():
 
     result = engine.compute(df)
 
-    assert (
-        result["bellman_rop"]
-        > 0
-    ).all()
+    assert (result["bellman_rop"] > 0).all()
 
 
 def test_bellman_rop_bounded():
@@ -136,10 +128,7 @@ def test_bellman_rop_bounded():
 
     result = engine.compute(df)
 
-    assert (
-        result["bellman_rop"]
-        <= 50000
-    ).all()
+    assert (result["bellman_rop"] <= 50000).all()
 
 
 def test_future_cost_finite():
@@ -150,11 +139,7 @@ def test_future_cost_finite():
 
     result = engine.compute(df)
 
-    assert (
-        result["expected_future_cost"]
-        .notna()
-        .all()
-    )
+    assert result["expected_future_cost"].notna().all()
 
 
 def test_state_value_finite():
@@ -165,8 +150,4 @@ def test_state_value_finite():
 
     result = engine.compute(df)
 
-    assert (
-        result["state_value"]
-        .notna()
-        .all()
-    )
+    assert result["state_value"].notna().all()

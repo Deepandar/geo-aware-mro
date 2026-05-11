@@ -47,18 +47,13 @@ class SimulatorPipeline:
         # Global lead-time fit
         # -------------------------------------------------
 
-        fit_result = (
-            fit_global_distribution(df)
-        )
+        fit_result = fit_global_distribution(df)
 
         fit_dist = fit_result.dist_name
         fit_params = fit_result.params
 
         logger.info(
-            (
-                "Using global LT distribution | "
-                "%s"
-            ),
+            ("Using global LT distribution | " "%s"),
             fit_dist,
         )
 
@@ -72,17 +67,11 @@ class SimulatorPipeline:
 
             sku_id = row["item_id"]
 
-            mean_demand = float(
-                row["mean_demand"]
-            )
+            mean_demand = float(row["mean_demand"])
 
-            rop = float(
-                row["rop"]
-            )
+            rop = float(row["rop"])
 
-            q_star = float(
-                row["q_star"]
-            )
+            q_star = float(row["q_star"])
 
             result = self.engine.run_policy_simulation(
                 sku_id=sku_id,
@@ -95,15 +84,10 @@ class SimulatorPipeline:
 
             outputs.append(result)
 
-        out = pd.DataFrame(
-            outputs
-        )
+        out = pd.DataFrame(outputs)
 
         logger.info(
-            (
-                "Simulation complete | "
-                "rows=%s"
-            ),
+            ("Simulation complete | " "rows=%s"),
             len(out),
         )
 

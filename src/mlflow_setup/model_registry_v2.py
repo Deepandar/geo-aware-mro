@@ -27,25 +27,21 @@ except Exception:
 
 REGISTRY_PREFIX = "geo-aware-mro"
 
-REGISTRY_PATH = Path(
-    "data/processed/model_registry_v2.json"
-)
+REGISTRY_PATH = Path("data/processed/model_registry_v2.json")
 
 
 # ---------------------------------------------------------
 # SAFE EXPERIMENT SETUP
 # ---------------------------------------------------------
 
+
 def setup_experiment(
-    experiment_name: str =
-    "MRO-v1.2-Registry",
+    experiment_name: str = "MRO-v1.2-Registry",
 ) -> str:
 
     if not MLFLOW_AVAILABLE:
 
-        logger.warning(
-            "MLflow unavailable"
-        )
+        logger.warning("MLflow unavailable")
 
         return "disabled"
 
@@ -53,21 +49,15 @@ def setup_experiment(
 
     try:
 
-        exp_id = mlflow.create_experiment(
-            experiment_name
-        )
+        exp_id = mlflow.create_experiment(experiment_name)
 
     except Exception:
 
-        exp = mlflow.get_experiment_by_name(
-            experiment_name
-        )
+        exp = mlflow.get_experiment_by_name(experiment_name)
 
         exp_id = exp.experiment_id
 
-    mlflow.set_experiment(
-        experiment_name
-    )
+    mlflow.set_experiment(experiment_name)
 
     return exp_id
 
@@ -76,31 +66,22 @@ def setup_experiment(
 # SAFE SKLEARN REGISTRATION
 # ---------------------------------------------------------
 
+
 def register_sklearn_model(
-
     model: Any,
-
     model_name: str,
-
     run_name: str,
-
     params: dict,
-
     metrics: dict,
-
 ) -> str:
 
     if not MLFLOW_AVAILABLE:
 
         return "mlflow-disabled"
 
-    full_name = (
-        f"{REGISTRY_PREFIX}/{model_name}"
-    )
+    full_name = f"{REGISTRY_PREFIX}/{model_name}"
 
-    with mlflow.start_run(
-        run_name=run_name
-    ) as run:
+    with mlflow.start_run(run_name=run_name) as run:
 
         for k, v in params.items():
 
@@ -114,13 +95,9 @@ def register_sklearn_model(
             )
 
         mlflow.sklearn.log_model(
-
             sk_model=model,
-
             artifact_path="model",
-
-            registered_model_name=
-            full_name,
+            registered_model_name=full_name,
         )
 
         run_id = run.info.run_id
@@ -137,26 +114,19 @@ def register_sklearn_model(
 # MAIN REGISTRY
 # ---------------------------------------------------------
 
+
 def register_all_v1_2_models(
-
     dt_qualifier,
-
     nash_model,
-
     repeated_game,
-
     bellman_engine,
-
     df: pd.DataFrame,
-
 ) -> dict:
 
     setup_experiment()
 
     manifest = {
-
         "version": "v1.2",
-
         "models": {},
     }
 
@@ -164,94 +134,49 @@ def register_all_v1_2_models(
     # SUPPLIER DT
     # -----------------------------------------------------
 
-    if getattr(
-        dt_qualifier,
-        "model",
-        None
-    ) is not None:
+    if getattr(dt_qualifier, "model", None) is not None:
 
         uri = register_sklearn_model(
-
             model=dt_qualifier.model,
-
-            model_name=
-            "supplier-qualifier",
-
-            run_name=
-            "W16_supplier_dt",
-
+            model_name="supplier-qualifier",
+            run_name="W16_supplier_dt",
             params={
-
-                "depth":
-                dt_qualifier.model.get_depth(),
-
-                "version":
-                "v1.2",
+                "depth": dt_qualifier.model.get_depth(),
+                "version": "v1.2",
             },
-
             metrics={
-
-                "critical_suppliers":
-                int(
-                    (
-                        df.get(
-                            "supplier_risk_class",
-                            ""
-                        )
-                        ==
-                        "Critical"
-                    ).sum()
+                "critical_suppliers": int(
+                    (df.get("supplier_risk_class", "") == "Critical").sum()
                 )
             },
         )
 
-        manifest["models"][
-            "supplier-qualifier"
-        ] = uri
+        manifest["models"]["supplier-qualifier"] = uri
 
     # -----------------------------------------------------
     # NASH MODEL
     # -----------------------------------------------------
 
-    manifest["models"][
-        "nash-model"
-    ] = "registered"
+    manifest["models"]["nash-model"] = "registered"
 
     # -----------------------------------------------------
     # REPEATED GAME
     # -----------------------------------------------------
 
-    ft = (
-        repeated_game
-        .folk_theorem_summary()
-    )
+    ft = repeated_game.folk_theorem_summary()
 
-    manifest["models"][
-        "repeated-game"
-    ] = {
-
-        "delta_required":
-        ft["delta_required"],
-
-        "folk_theorem":
-        ft[
-            "folk_theorem_satisfied"
-        ],
+    manifest["models"]["repeated-game"] = {
+        "delta_required": ft["delta_required"],
+        "folk_theorem": ft["folk_theorem_satisfied"],
     }
 
     # -----------------------------------------------------
     # BELLMAN ENGINE
     # -----------------------------------------------------
 
-    manifest["models"][
-        "bellman-dp"
-    ] = {
-
-        "beta":
-        bellman_engine.beta,
-
-        "T":
-        bellman_engine.T,
+    manifest["models"]["bellman-dp"] = {
+        "beta": bellman_engine.beta,
+        "T": bellman_engine.T,
     }
 
     # -----------------------------------------------------
@@ -288,9 +213,7 @@ def register_all_v1_2_models(
 
     logger.info(
         "Registry complete | %d models",
-        len(
-            manifest["models"]
-        ),
+        len(manifest["models"]),
     )
 
     return manifest

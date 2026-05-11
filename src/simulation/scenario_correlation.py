@@ -7,37 +7,28 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
-
 # =========================================================
 # Scenario Types
 # =========================================================
 
+
 class ScenarioType(Enum):
 
-    GEOPOLITICAL_SHOCK = (
-        "geopolitical_shock"
-    )
+    GEOPOLITICAL_SHOCK = "geopolitical_shock"
 
-    PORT_DISRUPTION = (
-        "port_disruption"
-    )
+    PORT_DISRUPTION = "port_disruption"
 
-    SUPPLIER_FAILURE = (
-        "supplier_failure"
-    )
+    SUPPLIER_FAILURE = "supplier_failure"
 
-    DEMAND_SURGE = (
-        "demand_surge"
-    )
+    DEMAND_SURGE = "demand_surge"
 
-    MULTI_ECHELON_CASCADE = (
-        "multi_echelon_cascade"
-    )
+    MULTI_ECHELON_CASCADE = "multi_echelon_cascade"
 
 
 # =========================================================
 # Black Swan Scenario
 # =========================================================
+
 
 @dataclass
 class BlackSwanScenario:
@@ -54,9 +45,7 @@ class BlackSwanScenario:
 
     demand_multiplier: float = 1.0
 
-    affected_skus: list = field(
-        default_factory=list
-    )
+    affected_skus: list = field(default_factory=list)
 
     severity: float = 1.0
 
@@ -68,7 +57,6 @@ class BlackSwanScenario:
 # =========================================================
 
 SCENARIO_LIBRARY = [
-
     BlackSwanScenario(
         name="Suez Closure",
         scenario_type=ScenarioType.PORT_DISRUPTION,
@@ -79,7 +67,6 @@ SCENARIO_LIBRARY = [
         severity=0.9,
         decay_rate=0.12,
     ),
-
     BlackSwanScenario(
         name="Taiwan Semiconductor Shock",
         scenario_type=ScenarioType.GEOPOLITICAL_SHOCK,
@@ -90,7 +77,6 @@ SCENARIO_LIBRARY = [
         severity=0.85,
         decay_rate=0.08,
     ),
-
     BlackSwanScenario(
         name="Single Supplier Bankruptcy",
         scenario_type=ScenarioType.SUPPLIER_FAILURE,
@@ -101,7 +87,6 @@ SCENARIO_LIBRARY = [
         severity=1.0,
         decay_rate=0.05,
     ),
-
     BlackSwanScenario(
         name="Post-Pandemic Demand Surge",
         scenario_type=ScenarioType.DEMAND_SURGE,
@@ -112,7 +97,6 @@ SCENARIO_LIBRARY = [
         severity=0.75,
         decay_rate=0.20,
     ),
-
     BlackSwanScenario(
         name="Multi-Tier Cascade Failure",
         scenario_type=ScenarioType.MULTI_ECHELON_CASCADE,
@@ -130,16 +114,13 @@ SCENARIO_LIBRARY = [
 # Correlation Propagator
 # =========================================================
 
+
 class CorrelationPropagator:
 
     def __init__(
-
         self,
-
         sku_ids: list[str],
-
         corr_matrix: Optional[np.ndarray] = None,
-
     ):
 
         self.sku_ids = sku_ids
@@ -152,20 +133,13 @@ class CorrelationPropagator:
 
         if corr_matrix is None:
 
-            corr_matrix = (
-                0.35 * np.ones((n, n))
-                + 0.65 * np.eye(n)
-            )
+            corr_matrix = 0.35 * np.ones((n, n)) + 0.65 * np.eye(n)
 
-        self.validate_corr(
-            corr_matrix
-        )
+        self.validate_corr(corr_matrix)
 
         self.corr_matrix = corr_matrix
 
-        self.L = np.linalg.cholesky(
-            corr_matrix
-        )
+        self.L = np.linalg.cholesky(corr_matrix)
 
     # -----------------------------------------------------
     # Validate matrix
@@ -176,12 +150,9 @@ class CorrelationPropagator:
         C: np.ndarray,
     ):
 
-        assert (
-            C.shape
-            == (
-                len(self.sku_ids),
-                len(self.sku_ids),
-            )
+        assert C.shape == (
+            len(self.sku_ids),
+            len(self.sku_ids),
         )
 
         assert np.allclose(
@@ -189,28 +160,19 @@ class CorrelationPropagator:
             C.T,
         )
 
-        eigvals = np.linalg.eigvalsh(
-            C
-        )
+        eigvals = np.linalg.eigvalsh(C)
 
-        assert (
-            eigvals >= -1e-8
-        ).all()
+        assert (eigvals >= -1e-8).all()
 
     # -----------------------------------------------------
     # Sample correlated shocks
     # -----------------------------------------------------
 
     def sample_correlated_shocks(
-
         self,
-
         scenario: BlackSwanScenario,
-
         rng: np.random.Generator,
-
         shock_sigma: float = 0.15,
-
     ) -> dict:
 
         n = len(self.sku_ids)
@@ -221,14 +183,9 @@ class CorrelationPropagator:
 
         result = {}
 
-        for i, sku in enumerate(
-            self.sku_ids
-        ):
+        for i, sku in enumerate(self.sku_ids):
 
-            affected = (
-                not scenario.affected_skus
-                or sku in scenario.affected_skus
-            )
+            affected = not scenario.affected_skus or sku in scenario.affected_skus
 
             if not affected:
 
@@ -239,15 +196,9 @@ class CorrelationPropagator:
 
                 continue
 
-            noise = (
-                correlated_z[i]
-                * shock_sigma
-            )
+            noise = correlated_z[i] * shock_sigma
 
-            severity = (
-                scenario.severity
-                * (1 + noise)
-            )
+            severity = scenario.severity * (1 + noise)
 
             severity = float(
                 np.clip(
@@ -257,24 +208,11 @@ class CorrelationPropagator:
                 )
             )
 
-            lt_m = (
-                1.0
-                + (
-                    scenario.lt_multiplier
-                    - 1.0
-                ) * severity
-            )
+            lt_m = 1.0 + (scenario.lt_multiplier - 1.0) * severity
 
-            dem_m = (
-                1.0
-                + (
-                    scenario.demand_multiplier
-                    - 1.0
-                ) * severity
-            )
+            dem_m = 1.0 + (scenario.demand_multiplier - 1.0) * severity
 
             result[sku] = {
-
                 "lt_mult": round(
                     float(
                         np.clip(
@@ -285,7 +223,6 @@ class CorrelationPropagator:
                     ),
                     4,
                 ),
-
                 "demand_mult": round(
                     float(
                         np.clip(
@@ -305,53 +242,37 @@ class CorrelationPropagator:
 # Shock Timeline
 # =========================================================
 
+
 class ShockTimeline:
 
     def __init__(
-
         self,
-
         T: int,
-
         sku_ids: list[str],
-
     ):
 
         self.T = T
 
         self.sku_ids = sku_ids
 
-        self._lt_mult = {
-            s: np.ones(T)
-            for s in sku_ids
-        }
+        self._lt_mult = {s: np.ones(T) for s in sku_ids}
 
-        self._dem_mult = {
-            s: np.ones(T)
-            for s in sku_ids
-        }
+        self._dem_mult = {s: np.ones(T) for s in sku_ids}
 
     # -----------------------------------------------------
     # Apply scenario
     # -----------------------------------------------------
 
     def apply_scenario(
-
         self,
-
         scenario: BlackSwanScenario,
-
         propagator: CorrelationPropagator,
-
         rng: np.random.Generator,
-
     ):
 
-        shocks = (
-            propagator.sample_correlated_shocks(
-                scenario,
-                rng,
-            )
+        shocks = propagator.sample_correlated_shocks(
+            scenario,
+            rng,
         )
 
         t0 = scenario.trigger_period
@@ -368,35 +289,22 @@ class ShockTimeline:
 
             elapsed = t - t0
 
-            decay = np.exp(
-                -scenario.decay_rate
-                * elapsed
-            )
+            decay = np.exp(-scenario.decay_rate * elapsed)
 
             for sku in self.sku_ids:
 
-                lt_peak = shocks[sku][
-                    "lt_mult"
-                ]
+                lt_peak = shocks[sku]["lt_mult"]
 
-                dem_peak = shocks[sku][
-                    "demand_mult"
-                ]
+                dem_peak = shocks[sku]["demand_mult"]
 
                 self._lt_mult[sku][t] = max(
                     self._lt_mult[sku][t],
-                    1.0
-                    + (
-                        lt_peak - 1.0
-                    ) * decay,
+                    1.0 + (lt_peak - 1.0) * decay,
                 )
 
                 self._dem_mult[sku][t] = max(
                     self._dem_mult[sku][t],
-                    1.0
-                    + (
-                        dem_peak - 1.0
-                    ) * decay,
+                    1.0 + (dem_peak - 1.0) * decay,
                 )
 
     # -----------------------------------------------------
@@ -404,21 +312,14 @@ class ShockTimeline:
     # -----------------------------------------------------
 
     def get_multipliers(
-
         self,
-
         sku_id: str,
-
         t: int,
-
     ):
 
         return (
-
             self._lt_mult[sku_id][t],
-
             self._dem_mult[sku_id][t],
-
         )
 
     # -----------------------------------------------------
@@ -433,29 +334,21 @@ class ShockTimeline:
 
         for sku in self.sku_ids:
 
-            for t in range(
-                self.T
-            ):
+            for t in range(self.T):
 
-                rows.append({
-
-                    "sku_id": sku,
-
-                    "period": t,
-
-                    "lt_mult": round(
-                        self._lt_mult[
-                            sku
-                        ][t],
-                        4,
-                    ),
-
-                    "demand_mult": round(
-                        self._dem_mult[
-                            sku
-                        ][t],
-                        4,
-                    ),
-                })
+                rows.append(
+                    {
+                        "sku_id": sku,
+                        "period": t,
+                        "lt_mult": round(
+                            self._lt_mult[sku][t],
+                            4,
+                        ),
+                        "demand_mult": round(
+                            self._dem_mult[sku][t],
+                            4,
+                        ),
+                    }
+                )
 
         return pd.DataFrame(rows)

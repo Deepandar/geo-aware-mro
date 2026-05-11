@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # RESULT OBJECT
 # ============================================================
 
+
 @dataclass
 class LifecycleResult:
 
@@ -45,26 +46,18 @@ class LifecycleResult:
 # OPTIMIZER
 # ============================================================
 
+
 class KKTLifecycleOptimizer:
 
     def __init__(
-
         self,
-
         h_rate: float = 0.20,
-
         lambda_obs: float = 8.0,
-
         k_weibull: float = 2.5,
-
         scarcity_base: float = 0.30,
-
         budget_cap_per_sku: float = 50000.0,
-
         kkt_tol: float = 1e-2,
-
         softplus_kappa: float = 15.0,
-
     ):
 
         self.h_rate = h_rate
@@ -86,34 +79,19 @@ class KKTLifecycleOptimizer:
     # ========================================================
 
     def _obsolescence_probability(
-
         self,
-
         age: float,
-
         geo_risk: float = 0.0,
-
     ) -> float:
 
-        effective_lambda = (
-
-            self.lambda_obs
-            / (1.0 + geo_risk * 0.5)
-
-        )
+        effective_lambda = self.lambda_obs / (1.0 + geo_risk * 0.5)
 
         return float(
-
             weibull_min.cdf(
-
                 age,
-
                 c=self.k_weibull,
-
                 scale=effective_lambda,
-
             )
-
         )
 
     # ========================================================
@@ -121,44 +99,30 @@ class KKTLifecycleOptimizer:
     # ========================================================
 
     def _vintage_penalty(
-
         self,
-
         age: float,
-
     ) -> float:
 
-        return 0.02 * (age ** 1.5)
+        return 0.02 * (age**1.5)
 
     # ========================================================
     # SCARCITY FACTOR
     # ========================================================
 
     def _scarcity_factor(
-
         self,
-
         age: float,
-
     ) -> float:
 
-        return (
-
-            self.scarcity_base
-            * (1 + (age / self.lambda_obs) ** 2)
-
-        )
+        return self.scarcity_base * (1 + (age / self.lambda_obs) ** 2)
 
     # ========================================================
     # SOFTPLUS
     # ========================================================
 
     def _softplus(
-
         self,
-
         z: float,
-
     ) -> float:
 
         k = self.softplus_kappa
@@ -169,32 +133,19 @@ class KKTLifecycleOptimizer:
             50,
         )
 
-        return float(
-
-            np.log1p(
-                np.exp(k * z_clip)
-            ) / k
-
-        )
+        return float(np.log1p(np.exp(k * z_clip)) / k)
 
     # ========================================================
     # TOTAL COST
     # ========================================================
 
     def _total_cost(
-
         self,
-
         x: float,
-
         unit_cost: float,
-
         age: float,
-
         geo_risk: float,
-
         q_optimal: float,
-
     ) -> float:
 
         x = max(float(x), 1e-6)
@@ -203,14 +154,7 @@ class KKTLifecycleOptimizer:
         # HOLDING COST
         # ----------------------------------------------------
 
-        holding_cost = (
-
-            self.h_rate
-            * unit_cost
-            * x
-            * (1.0 + self._vintage_penalty(age))
-
-        )
+        holding_cost = self.h_rate * unit_cost * x * (1.0 + self._vintage_penalty(age))
 
         # ----------------------------------------------------
         # OBSOLESCENCE
@@ -221,22 +165,15 @@ class KKTLifecycleOptimizer:
             geo_risk,
         )
 
-        replacement_cost = (
-
-            unit_cost
-            * (1.0 + self._scarcity_factor(age))
-
-        )
+        replacement_cost = unit_cost * (1.0 + self._scarcity_factor(age))
 
         obsolescence_cost = (
-
             obs_prob
             * replacement_cost
             * min(
                 x / max(q_optimal, 1.0),
                 1.5,
             )
-
         )
 
         # ----------------------------------------------------
@@ -251,98 +188,48 @@ class KKTLifecycleOptimizer:
         # SHORTAGE PENALTY
         # ----------------------------------------------------
 
-        shortage_penalty = (
-
-            unmet_demand
-            * replacement_cost
-            * (
-                2.0
-                + geo_risk
-                + obs_prob
-            )
-
-        )
+        shortage_penalty = unmet_demand * replacement_cost * (2.0 + geo_risk + obs_prob)
 
         # ----------------------------------------------------
         # READINESS PENALTY
         # ----------------------------------------------------
 
-        readiness_penalty = (
+        readiness_penalty = unmet_demand**1.2 * unit_cost * 0.5
 
-            unmet_demand ** 1.2
-            * unit_cost
-            * 0.5
-
-        )
-
-        return (
-
-            holding_cost
-
-            + obsolescence_cost
-
-            + shortage_penalty
-
-            + readiness_penalty
-
-        )
+        return holding_cost + obsolescence_cost + shortage_penalty + readiness_penalty
 
     # ========================================================
     # KKT STATIONARITY
     # ========================================================
 
     def _kkt_stationarity(
-
         self,
-
         x: float,
-
         unit_cost: float,
-
         age: float,
-
         geo_risk: float,
-
         q_optimal: float,
-
     ) -> float:
 
         eps = 1e-5
 
         f1 = self._total_cost(
-
             x + eps,
-
             unit_cost,
-
             age,
-
             geo_risk,
-
             q_optimal,
-
         )
 
         f2 = self._total_cost(
-
             x - eps,
-
             unit_cost,
-
             age,
-
             geo_risk,
-
             q_optimal,
-
         )
 
-        grad = (
-
-            (f1 - f2)
-            / (2 * eps)
-
-        )
+        grad = (f1 - f2) / (2 * eps)
 
         return abs(float(grad))
 
@@ -351,37 +238,19 @@ class KKTLifecycleOptimizer:
     # ========================================================
 
     def optimize_sku(
-
         self,
-
         row: Dict,
-
     ) -> LifecycleResult:
 
-        iid = str(
-            row.get("item_id", "UNKNOWN")
-        )
+        iid = str(row.get("item_id", "UNKNOWN"))
 
-        unit_cost = float(
-            row.get("unit_cost", 1000.0)
-        )
+        unit_cost = float(row.get("unit_cost", 1000.0))
 
-        q_opt = float(
+        q_opt = float(row.get("dp_q_star", row.get("q_star", 10.0)))
 
-            row.get(
-                "dp_q_star",
-                row.get("q_star", 10.0)
-            )
+        geo_risk = float(row.get("geo_risk_score", 0.0))
 
-        )
-
-        geo_risk = float(
-            row.get("geo_risk_score", 0.0)
-        )
-
-        age = float(
-            row.get("item_age_years", 2.0)
-        )
+        age = float(row.get("item_age_years", 2.0))
 
         # ----------------------------------------------------
         # OBJECTIVE
@@ -390,17 +259,11 @@ class KKTLifecycleOptimizer:
         def objective(x_arr):
 
             return self._total_cost(
-
                 x_arr[0],
-
                 unit_cost,
-
                 age,
-
                 geo_risk,
-
                 q_opt,
-
             )
 
         # ----------------------------------------------------
@@ -420,25 +283,15 @@ class KKTLifecycleOptimizer:
         # ----------------------------------------------------
 
         result = minimize(
-
             objective,
-
             x0,
-
             method="SLSQP",
-
             bounds=bounds,
-
             options={
-
                 "maxiter": 200,
-
                 "ftol": 1e-8,
-
                 "disp": False,
-
             },
-
         )
 
         x_star = max(
@@ -453,12 +306,7 @@ class KKTLifecycleOptimizer:
         # ----------------------------------------------------
 
         holding_cost = (
-
-            self.h_rate
-            * unit_cost
-            * x_star
-            * (1.0 + self._vintage_penalty(age))
-
+            self.h_rate * unit_cost * x_star * (1.0 + self._vintage_penalty(age))
         )
 
         obs_prob = self._obsolescence_probability(
@@ -466,64 +314,35 @@ class KKTLifecycleOptimizer:
             geo_risk,
         )
 
-        replacement_cost = (
-
-            unit_cost
-            * (1.0 + self._scarcity_factor(age))
-
-        )
+        replacement_cost = unit_cost * (1.0 + self._scarcity_factor(age))
 
         obsolescence_cost = (
-
             obs_prob
             * replacement_cost
             * min(
                 x_star / max(q_opt, 1.0),
                 1.5,
             )
-
         )
 
         diff = q_opt - x_star
 
         unmet = self._softplus(diff)
 
-        shortage_penalty = (
+        shortage_penalty = unmet * replacement_cost * (2.0 + geo_risk + obs_prob)
 
-            unmet
-            * replacement_cost
-            * (
-                2.0
-                + geo_risk
-                + obs_prob
-            )
-
-        )
-
-        readiness_penalty = (
-
-            unmet ** 1.2
-            * unit_cost
-            * 0.5
-
-        )
+        readiness_penalty = unmet**1.2 * unit_cost * 0.5
 
         # ----------------------------------------------------
         # KKT
         # ----------------------------------------------------
 
         kkt_resid = self._kkt_stationarity(
-
             x_star,
-
             unit_cost,
-
             age,
-
             geo_risk,
-
             q_opt,
-
         )
 
         # ----------------------------------------------------
@@ -540,10 +359,13 @@ class KKTLifecycleOptimizer:
 
         for t in thresholds:
 
-            if self._obsolescence_probability(
-                t,
-                geo_risk,
-            ) > 0.80:
+            if (
+                self._obsolescence_probability(
+                    t,
+                    geo_risk,
+                )
+                > 0.80
+            ):
 
                 write_off_age = float(t)
                 break
@@ -569,70 +391,53 @@ class KKTLifecycleOptimizer:
             action = "Hold"
 
         return LifecycleResult(
-
             item_id=iid,
-
             optimal_holding_qty=round(
                 x_star,
                 4,
             ),
-
             optimal_total_cost=round(
                 total_cost,
                 2,
             ),
-
             holding_cost_at_opt=round(
                 holding_cost,
                 2,
             ),
-
             obsolescence_cost_at_opt=round(
                 obsolescence_cost,
                 2,
             ),
-
             shortage_penalty_at_opt=round(
                 shortage_penalty,
                 2,
             ),
-
             readiness_penalty_at_opt=round(
                 readiness_penalty,
                 2,
             ),
-
             replacement_cost_at_opt=round(
                 replacement_cost,
                 2,
             ),
-
             obsolescence_prob=round(
                 obs_prob,
                 4,
             ),
-
             kkt_stationarity=round(
                 kkt_resid,
                 6,
             ),
-
-            kkt_satisfied=(
-                kkt_resid < self.kkt_tol
-            ),
-
+            kkt_satisfied=(kkt_resid < self.kkt_tol),
             action=action,
-
             age_years=round(
                 age,
                 2,
             ),
-
             write_off_threshold_yrs=round(
                 write_off_age,
                 2,
             ),
-
         )
 
 
@@ -647,21 +452,13 @@ if __name__ == "__main__":
     print("==================================================")
 
     row = {
-
         "item_id": "SKU_TEST",
-
         "unit_cost": 1000.0,
-
         "q_star": 10.0,
-
         "dp_q_star": 12.0,
-
         "geo_risk_score": 0.2,
-
         "ci_score": 0.7,
-
         "tsl": 0.95,
-
         "item_age_years": 2.0,
     }
 
