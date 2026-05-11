@@ -13,4 +13,16 @@ scikit-learn==1.6.1
 pyarrow==19.0.1
 fastparquet==2024.11.0
 pytest-cov
-fastembed
+# =====================================================
+# Optimization + Visualization Dependencies
+# =====================================================
+
+seaborn==0.13.2
+pulp==2.9.0
+
+# =====================================================
+# Reinforcement Learning
+# =====================================================
+
+stable-baselines3==2.3.2
+gymnasium==0.29.1
