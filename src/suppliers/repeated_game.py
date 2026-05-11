@@ -387,6 +387,16 @@ class RepeatedGameModel:
         df: pd.DataFrame,
     ):
 
+        # -------------------------------------------------
+        # REQUIRED COLUMN VALIDATION
+        # -------------------------------------------------
+
+        if "item_id" not in df.columns:
+
+            raise ValueError(
+                "item_id column is required"
+            )
+
         results = []
 
         for _, row in df.iterrows():

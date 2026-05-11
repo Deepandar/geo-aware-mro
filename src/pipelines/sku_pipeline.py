@@ -3,8 +3,14 @@ from src.suppliers.decision_tree_qualifier import (
     DecisionTreeQualifier,
 )
 
+from src.simulation.bullwhip_model import BullwhipModel
+
 from src.suppliers.nash_equilibrium import (
     NashEquilibriumEngine,
+)
+
+from src.suppliers.repeated_game import (
+    RepeatedGameModel,
 )
 
 # src/pipelines/sku_pipeline.py
@@ -68,7 +74,7 @@ from src.data_ingestion.synthetic_sku_master import (
 )
 
 from src.optimization.bellman_engine import (
-    BellmanEngine,
+BellmanEngine,
 )
 
 
@@ -425,6 +431,86 @@ def run_pipeline(
             ),
         )
 
+
+        # =========================================================
+        # STAGE 15.5 — REPEATED GAME REPUTATION
+        # =========================================================
+
+        logger.info(
+            "Stage 15.5/15 — Repeated Game Reputation"
+        )
+
+        reputation_model = RepeatedGameModel(
+
+            T=24,
+
+            discount_factor=0.92,
+
+            late_threshold_days=7.0,
+
+            cooperation_surplus=100.0,
+
+            defection_gain=20.0,
+
+            grim_trigger_threshold=3,
+        )
+
+        reputation_df, reputation_matrix = (
+            reputation_model.score(df)
+        )
+
+        # -------------------------------------------------
+        # SCHEMA NORMALIZATION
+        # -------------------------------------------------
+
+        df["item_id"] = (
+            df["item_id"]
+            .astype(str)
+        )
+
+        reputation_df["item_id"] = (
+            reputation_df["item_id"]
+            .astype(str)
+        )
+
+        reputation_cols = [
+
+            "item_id",
+
+            "reputation_score",
+
+            "grim_trigger_fired",
+
+            "n_defections",
+
+            "delta_satisfied",
+
+            "recommended_action",
+        ]
+
+        df = df.merge(
+
+            reputation_df[
+                reputation_cols
+            ],
+
+            on="item_id",
+
+            how="left",
+        )
+
+        logger.info(
+            (
+                "Repeated game complete | "
+                "mean_reputation=%.3f"
+            ),
+            float(
+                df[
+                    "reputation_score"
+                ].mean()
+            ),
+        )
+
         # ---------------------------------------------------------
         # Backward compatibility aliases
         # ---------------------------------------------------------
@@ -465,6 +551,35 @@ def run_pipeline(
             df["rop"],
             1.0,
             None,
+        )
+
+
+        # ---------------------------------------------------------
+        # Integration compatibility aliases
+        # ---------------------------------------------------------
+
+        df["rul_signal"] = np.clip(
+
+            df["rul_days"],
+
+            1,
+
+            None,
+        )
+
+        df["pull_trigger"] = (
+            df["imminent_failure"]
+        )
+
+        df["decoupling_mode"] = np.where(
+
+            df["supplier_strategy"]
+            ==
+            "Strategic",
+
+            "CODP",
+
+            "Push+Pull",
         )
 
         # ---------------------------------------------------------
@@ -664,23 +779,166 @@ def run_pipeline(
             OUTPUT_PATH,
         )
 
+        
+
+        # ── Stage 15: Bullwhip Quantification ─────────────────────────────
+
+        logger.info(
+            "Stage 15/15 — Bullwhip Effect Quantification"
+        )
+
+        bw_model = BullwhipModel(
+
+            n_periods       = 52,
+            n_echelons      = 4,
+            lead_times      = [1, 2, 3, 4],
+            smoothing_alpha = 0.20,
+            seed            = 42,
+        )
+
+        bw_summary_dp = bw_model.analyze_all(
+
+            df,
+            policy_type="dp_optimized",
+        )
+
+        bw_summary_std = bw_model.analyze_all(
+
+            df,
+            policy_type="standard",
+        )
+
+        BW_PATH = Path(
+            "data/processed/bullwhip_results.parquet"
+        )
+
+        bw_df = bw_model.to_dataframe(
+            bw_summary_dp
+        )
+
+        bw_df.to_parquet(
+            BW_PATH,
+            index=False,
+        )
+
+        reduction = (
+
+            (
+                bw_summary_std.mean_total_amplification
+                -
+                bw_summary_dp.mean_total_amplification
+            )
+
+            /
+
+            max(
+                bw_summary_std.mean_total_amplification,
+                1,
+            )
+        )
+
+        mlflow.log_metric(
+
+            "bwr_standard_mean",
+
+            bw_summary_std.mean_total_amplification,
+        )
+
+        mlflow.log_metric(
+
+            "bwr_dp_optimized_mean",
+
+            bw_summary_dp.mean_total_amplification,
+        )
+
+        mlflow.log_metric(
+
+            "bullwhip_reduction_pct",
+
+            reduction * 100,
+        )
+
+        logger.info(
+
+            "Bullwhip | standard_BWR=%.2f | dp_BWR=%.2f | reduction=%.1f%%",
+
+            bw_summary_std.mean_total_amplification,
+
+            bw_summary_dp.mean_total_amplification,
+
+            reduction * 100,
+        )
+
+        
+        metrics.update({
+
+            "mean_ci_score":
+                round(
+                    df["ci_score"].mean(),
+                    4,
+                ),
+
+            "mean_tsl":
+                round(
+                    df["tsl"].mean(),
+                    4,
+                ),
+
+            "mean_q_star":
+                round(
+                    df["q_star"].mean(),
+                    4,
+                ),
+
+            "mean_geo_risk":
+                round(
+                    df["geo_risk_score"].mean(),
+                    4,
+                ),
+
+            "bwr_standard":
+                round(
+                    bw_summary_std.mean_total_amplification,
+                    4,
+                ),
+
+            "bwr_dp_optimized":
+                round(
+                    bw_summary_dp.mean_total_amplification,
+                    4,
+                ),
+
+            "bullwhip_reduction_pct":
+                round(
+                    reduction * 100,
+                    2,
+                ),
+
+            "v1_2_stage_count":
+                15,
+        })
+
+        METRICS_PATH.write_text(
+
+            json.dumps(
+                metrics,
+                indent=2,
+            )
+        )
+
+        V12_PATH = Path(
+            "data/processed/sku_master_v1.2.parquet"
+        )
+
+        df.to_parquet(
+
+            V12_PATH,
+            index=False,
+        )
+
+        logger.info(
+            "v1.2 SKU Master saved: %s",
+            V12_PATH,
+        )
+
         return df
-
-
-if __name__ == "__main__":
-
-    result = run_pipeline()
-
-    print(
-        result[
-            [
-                "supply_origin_country",
-                "geo_risk_score",
-                "ltr_score",
-                "ci_score",
-                "bellman_q_star",
-                "bellman_rop",
-                "expected_future_cost",
-            ]
-        ].head()
-    )
