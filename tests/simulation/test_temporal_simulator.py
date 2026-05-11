@@ -25,9 +25,7 @@ def build_simulation_df(
     n_skus: int = 100,
 ):
 
-    df = generate_sku_master(
-        n_skus=n_skus
-    )
+    df = generate_sku_master(n_skus=n_skus)
 
     # -----------------------------------------------------
     # Required classification stages
@@ -44,13 +42,9 @@ def build_simulation_df(
 
 def test_temporal_simulator_runs():
 
-    df = build_simulation_df(
-        n_skus=100
-    )
+    df = build_simulation_df(n_skus=100)
 
-    sim = TemporalSimulator(
-        simulation_horizon=5
-    )
+    sim = TemporalSimulator(simulation_horizon=5)
 
     result = sim.run(df)
 
@@ -70,61 +64,34 @@ def test_temporal_simulator_runs():
 
 def test_temporal_simulator_generates_steps():
 
-    df = build_simulation_df(
-        n_skus=50
-    )
+    df = build_simulation_df(n_skus=50)
 
-    sim = TemporalSimulator(
-        simulation_horizon=4
-    )
+    sim = TemporalSimulator(simulation_horizon=4)
 
     result = sim.run(df)
 
-    assert (
-        result["simulation_step"]
-        .nunique()
-        == 4
-    )
+    assert result["simulation_step"].nunique() == 4
 
 
 def test_temporal_simulator_metrics_bounded():
 
-    df = build_simulation_df(
-        n_skus=50
-    )
+    df = build_simulation_df(n_skus=50)
 
-    sim = TemporalSimulator(
-        simulation_horizon=3
-    )
+    sim = TemporalSimulator(simulation_horizon=3)
 
     result = sim.run(df)
 
-    assert (
-        result["mean_ltr"]
-        .between(0, 1)
-        .all()
-    )
+    assert result["mean_ltr"].between(0, 1).all()
 
-    assert (
-        result["mean_ci"]
-        .between(0, 1)
-        .all()
-    )
+    assert result["mean_ci"].between(0, 1).all()
 
 
 def test_temporal_simulator_disruptions_nonnegative():
 
-    df = build_simulation_df(
-        n_skus=50
-    )
+    df = build_simulation_df(n_skus=50)
 
-    sim = TemporalSimulator(
-        simulation_horizon=3
-    )
+    sim = TemporalSimulator(simulation_horizon=3)
 
     result = sim.run(df)
 
-    assert (
-        result["active_disruptions"]
-        >= 0
-    ).all()
+    assert (result["active_disruptions"] >= 0).all()

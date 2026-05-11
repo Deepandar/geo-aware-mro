@@ -16,19 +16,12 @@ def classify_abc(
         elif "demand_mean" in df.columns:
             demand_col = "demand_mean"
         else:
-            raise ValueError(
-                "Missing required column: demand or demand_mean"
-            )
+            raise ValueError("Missing required column: demand or demand_mean")
 
         if "unit_cost" not in df.columns:
-            raise ValueError(
-                "Missing required column: unit_cost"
-            )
+            raise ValueError("Missing required column: unit_cost")
 
-        df["annual_consumption_value"] = (
-            df["unit_cost"]
-            * df[demand_col]
-        )
+        df["annual_consumption_value"] = df["unit_cost"] * df[demand_col]
 
     total = df["annual_consumption_value"].sum()
 
@@ -41,10 +34,7 @@ def classify_abc(
         ascending=False,
     )
 
-    df["cum_pct"] = (
-        df["annual_consumption_value"].cumsum()
-        / total
-    )
+    df["cum_pct"] = df["annual_consumption_value"].cumsum() / total
 
     def assign_class(value: float) -> str:
         if value <= cut_a:

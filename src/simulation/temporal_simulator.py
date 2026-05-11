@@ -22,12 +22,10 @@ from src.classifiers.criticality_index import (
     CriticalityIndexer,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
 class TemporalSimulator:
-
     """
     Stateful temporal disruption simulator.
 
@@ -45,29 +43,18 @@ class TemporalSimulator:
         simulation_horizon: int = 12,
     ):
 
-        self.simulation_horizon = (
-            simulation_horizon
-        )
+        self.simulation_horizon = simulation_horizon
 
-        self.scenario_mgr = (
-            ScenarioManager()
-        )
+        self.scenario_mgr = ScenarioManager()
 
-        self.resilience = (
-            ResilienceEngine()
-        )
+        self.resilience = ResilienceEngine()
 
         self.ltr = LTRScorer()
 
-        self.ci = (
-            CriticalityIndexer()
-        )
+        self.ci = CriticalityIndexer()
 
         logger.info(
-            (
-                "TemporalSimulator initialised | "
-                "horizon=%d"
-            ),
+            ("TemporalSimulator initialised | " "horizon=%d"),
             self.simulation_horizon,
         )
 
@@ -94,9 +81,7 @@ class TemporalSimulator:
         ):
 
             logger.info(
-                (
-                    "Simulation step %d/%d"
-                ),
+                ("Simulation step %d/%d"),
                 t,
                 self.simulation_horizon,
             )
@@ -105,102 +90,53 @@ class TemporalSimulator:
             # Inject new disruptions
             # -----------------------------------------------------
 
-            current_state = (
-                self.scenario_mgr.inject(
-                    current_state,
-                    sim_time=t,
-                )
+            current_state = self.scenario_mgr.inject(
+                current_state,
+                sim_time=t,
             )
 
             # -----------------------------------------------------
             # Apply resilience decay
             # -----------------------------------------------------
 
-            current_state = (
-                self.resilience.apply_decay(
-                    current_state,
-                    sim_time=t,
-                )
+            current_state = self.resilience.apply_decay(
+                current_state,
+                sim_time=t,
             )
 
             # -----------------------------------------------------
             # Recompute LTR
             # -----------------------------------------------------
 
-            current_state = (
-                self.ltr.compute(
-                    current_state
-                )
-            )
+            current_state = self.ltr.compute(current_state)
 
             # -----------------------------------------------------
             # Recompute CI
             # -----------------------------------------------------
 
-            current_state = (
-                self.ci.compute(
-                    current_state
-                )
-            )
+            current_state = self.ci.compute(current_state)
 
             # -----------------------------------------------------
             # Persist temporal metadata
             # -----------------------------------------------------
 
-            current_state[
-                "simulation_step"
-            ] = t
+            current_state["simulation_step"] = t
 
-            current_state[
-                "active_disruptions"
-            ] = int(
-                current_state[
-                    "scenario_active"
-                ].sum()
+            current_state["active_disruptions"] = int(
+                current_state["scenario_active"].sum()
             )
 
-            current_state[
-                "mean_ltr"
-            ] = float(
-                current_state[
-                    "ltr_score"
-                ].mean()
-            )
+            current_state["mean_ltr"] = float(current_state["ltr_score"].mean())
 
-            current_state[
-                "mean_ci"
-            ] = float(
-                current_state[
-                    "ci_score"
-                ].mean()
-            )
+            current_state["mean_ci"] = float(current_state["ci_score"].mean())
 
-            history.append(
-                current_state.copy()
-            )
+            history.append(current_state.copy())
 
             logger.info(
-                (
-                    "Step complete | "
-                    "active=%d | "
-                    "mean_ltr=%.3f | "
-                    "mean_ci=%.3f"
-                ),
-                int(
-                    current_state[
-                        "scenario_active"
-                    ].sum()
-                ),
-                float(
-                    current_state[
-                        "ltr_score"
-                    ].mean()
-                ),
-                float(
-                    current_state[
-                        "ci_score"
-                    ].mean()
-                ),
+                ("Step complete | " "active=%d | " "mean_ltr=%.3f | " "mean_ci=%.3f"),
+                int(current_state["scenario_active"].sum()),
+                float(current_state["ltr_score"].mean()),
+                float(current_state["ci_score"].mean()),
             )
 
         # ---------------------------------------------------------
@@ -213,10 +149,7 @@ class TemporalSimulator:
         )
 
         logger.info(
-            (
-                "Temporal simulation complete | "
-                "rows=%d"
-            ),
+            ("Temporal simulation complete | " "rows=%d"),
             len(result),
         )
 

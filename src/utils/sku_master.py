@@ -8,41 +8,237 @@ import mlflow
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 FIELD_CATALOG = {
-    "sku_id": {"dtype": "VARCHAR", "nullable": False, "source": "master", "used_by": ["forecasting", "risk", "inventory"], "validation": "non-empty unique SKU"},
-    "item_name": {"dtype": "VARCHAR", "nullable": False, "source": "master", "used_by": ["forecasting", "inventory"], "validation": "non-empty"},
-    "item_description": {"dtype": "VARCHAR", "nullable": True, "source": "master", "used_by": ["inventory"], "validation": "free text"},
-    "category": {"dtype": "VARCHAR", "nullable": False, "source": "master", "used_by": ["forecasting", "inventory"], "validation": "non-empty"},
-    "subcategory": {"dtype": "VARCHAR", "nullable": True, "source": "master", "used_by": ["inventory"], "validation": "free text"},
-    "uom": {"dtype": "VARCHAR", "nullable": False, "source": "master", "used_by": ["inventory"], "validation": "non-empty"},
-    "abc_class": {"dtype": "VARCHAR", "nullable": False, "source": "derived", "used_by": ["inventory"], "validation": "A/B/C"},
-    "ved_class": {"dtype": "VARCHAR", "nullable": False, "source": "derived", "used_by": ["inventory"], "validation": "V/E/D"},
-    "fns_class": {"dtype": "VARCHAR", "nullable": False, "source": "derived", "used_by": ["forecasting", "inventory"], "validation": "F/N/S"},
-    "class_code": {"dtype": "VARCHAR", "nullable": False, "source": "derived", "used_by": ["forecasting", "risk", "inventory"], "validation": "len == 3, ABC×VED×FNS"},
-    "unit_cost_usd": {"dtype": "DOUBLE", "nullable": False, "source": "procurement", "used_by": ["inventory"], "validation": "> 0"},
-    "lead_time_days": {"dtype": "INTEGER", "nullable": False, "source": "procurement", "used_by": ["forecasting", "inventory"], "validation": ">= 0"},
-    "moq": {"dtype": "INTEGER", "nullable": False, "source": "procurement", "used_by": ["inventory"], "validation": ">= 1"},
-    "supplier_id": {"dtype": "VARCHAR", "nullable": False, "source": "supplier", "used_by": ["risk", "inventory"], "validation": "non-empty"},
-    "supplier_name": {"dtype": "VARCHAR", "nullable": False, "source": "supplier", "used_by": ["risk", "inventory"], "validation": "non-empty"},
-    "supply_origin_country": {"dtype": "VARCHAR", "nullable": False, "source": "supplier", "used_by": ["risk"], "validation": "ISO-3 country code"},
-    "geo_risk_score": {"dtype": "DOUBLE", "nullable": False, "source": "risk", "used_by": ["risk", "inventory"], "validation": "0 <= x <= 1"},
-    "criticality_score": {"dtype": "DOUBLE", "nullable": False, "source": "derived", "used_by": ["inventory"], "validation": "0 <= x <= 1"},
-    "annual_demand_qty": {"dtype": "DOUBLE", "nullable": False, "source": "demand", "used_by": ["forecasting", "inventory"], "validation": ">= 0"},
-    "avg_monthly_demand_qty": {"dtype": "DOUBLE", "nullable": False, "source": "demand", "used_by": ["forecasting"], "validation": ">= 0"},
-    "demand_cv": {"dtype": "DOUBLE", "nullable": True, "source": "derived", "used_by": ["forecasting"], "validation": ">= 0"},
-    "intermittency_index": {"dtype": "DOUBLE", "nullable": True, "source": "derived", "used_by": ["forecasting"], "validation": ">= 0"},
-    "service_level_target": {"dtype": "DOUBLE", "nullable": False, "source": "policy", "used_by": ["inventory"], "validation": "0 < x < 1"},
-    "stockout_cost_usd": {"dtype": "DOUBLE", "nullable": False, "source": "policy", "used_by": ["inventory"], "validation": "> 0"},
-    "salvage_value_usd": {"dtype": "DOUBLE", "nullable": False, "source": "policy", "used_by": ["inventory"], "validation": ">= 0 and < stockout_cost_usd"},
-    "current_on_hand_qty": {"dtype": "DOUBLE", "nullable": False, "source": "inventory", "used_by": ["inventory"], "validation": ">= 0"},
-    "reorder_point_qty": {"dtype": "DOUBLE", "nullable": True, "source": "derived", "used_by": ["inventory"], "validation": ">= 0"},
-    "safety_stock_qty": {"dtype": "DOUBLE", "nullable": True, "source": "derived", "used_by": ["inventory"], "validation": ">= 0"},
+    "sku_id": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "master",
+        "used_by": ["forecasting", "risk", "inventory"],
+        "validation": "non-empty unique SKU",
+    },
+    "item_name": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "master",
+        "used_by": ["forecasting", "inventory"],
+        "validation": "non-empty",
+    },
+    "item_description": {
+        "dtype": "VARCHAR",
+        "nullable": True,
+        "source": "master",
+        "used_by": ["inventory"],
+        "validation": "free text",
+    },
+    "category": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "master",
+        "used_by": ["forecasting", "inventory"],
+        "validation": "non-empty",
+    },
+    "subcategory": {
+        "dtype": "VARCHAR",
+        "nullable": True,
+        "source": "master",
+        "used_by": ["inventory"],
+        "validation": "free text",
+    },
+    "uom": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "master",
+        "used_by": ["inventory"],
+        "validation": "non-empty",
+    },
+    "abc_class": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "derived",
+        "used_by": ["inventory"],
+        "validation": "A/B/C",
+    },
+    "ved_class": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "derived",
+        "used_by": ["inventory"],
+        "validation": "V/E/D",
+    },
+    "fns_class": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "derived",
+        "used_by": ["forecasting", "inventory"],
+        "validation": "F/N/S",
+    },
+    "class_code": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "derived",
+        "used_by": ["forecasting", "risk", "inventory"],
+        "validation": "len == 3, ABC×VED×FNS",
+    },
+    "unit_cost_usd": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "procurement",
+        "used_by": ["inventory"],
+        "validation": "> 0",
+    },
+    "lead_time_days": {
+        "dtype": "INTEGER",
+        "nullable": False,
+        "source": "procurement",
+        "used_by": ["forecasting", "inventory"],
+        "validation": ">= 0",
+    },
+    "moq": {
+        "dtype": "INTEGER",
+        "nullable": False,
+        "source": "procurement",
+        "used_by": ["inventory"],
+        "validation": ">= 1",
+    },
+    "supplier_id": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "supplier",
+        "used_by": ["risk", "inventory"],
+        "validation": "non-empty",
+    },
+    "supplier_name": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "supplier",
+        "used_by": ["risk", "inventory"],
+        "validation": "non-empty",
+    },
+    "supply_origin_country": {
+        "dtype": "VARCHAR",
+        "nullable": False,
+        "source": "supplier",
+        "used_by": ["risk"],
+        "validation": "ISO-3 country code",
+    },
+    "geo_risk_score": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "risk",
+        "used_by": ["risk", "inventory"],
+        "validation": "0 <= x <= 1",
+    },
+    "criticality_score": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "derived",
+        "used_by": ["inventory"],
+        "validation": "0 <= x <= 1",
+    },
+    "annual_demand_qty": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "demand",
+        "used_by": ["forecasting", "inventory"],
+        "validation": ">= 0",
+    },
+    "avg_monthly_demand_qty": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "demand",
+        "used_by": ["forecasting"],
+        "validation": ">= 0",
+    },
+    "demand_cv": {
+        "dtype": "DOUBLE",
+        "nullable": True,
+        "source": "derived",
+        "used_by": ["forecasting"],
+        "validation": ">= 0",
+    },
+    "intermittency_index": {
+        "dtype": "DOUBLE",
+        "nullable": True,
+        "source": "derived",
+        "used_by": ["forecasting"],
+        "validation": ">= 0",
+    },
+    "service_level_target": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "policy",
+        "used_by": ["inventory"],
+        "validation": "0 < x < 1",
+    },
+    "stockout_cost_usd": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "policy",
+        "used_by": ["inventory"],
+        "validation": "> 0",
+    },
+    "salvage_value_usd": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "policy",
+        "used_by": ["inventory"],
+        "validation": ">= 0 and < stockout_cost_usd",
+    },
+    "current_on_hand_qty": {
+        "dtype": "DOUBLE",
+        "nullable": False,
+        "source": "inventory",
+        "used_by": ["inventory"],
+        "validation": ">= 0",
+    },
+    "reorder_point_qty": {
+        "dtype": "DOUBLE",
+        "nullable": True,
+        "source": "derived",
+        "used_by": ["inventory"],
+        "validation": ">= 0",
+    },
+    "safety_stock_qty": {
+        "dtype": "DOUBLE",
+        "nullable": True,
+        "source": "derived",
+        "used_by": ["inventory"],
+        "validation": ">= 0",
+    },
 }
 
 PIPELINE_REQUIREMENTS = {
-    "forecasting": ["sku_id", "fns_class", "class_code", "lead_time_days", "annual_demand_qty", "avg_monthly_demand_qty", "demand_cv", "intermittency_index"],
-    "risk": ["sku_id", "supplier_id", "supplier_name", "supply_origin_country", "geo_risk_score", "class_code"],
-    "inventory": ["sku_id", "abc_class", "ved_class", "class_code", "unit_cost_usd", "moq", "service_level_target", "stockout_cost_usd", "salvage_value_usd", "current_on_hand_qty"],
+    "forecasting": [
+        "sku_id",
+        "fns_class",
+        "class_code",
+        "lead_time_days",
+        "annual_demand_qty",
+        "avg_monthly_demand_qty",
+        "demand_cv",
+        "intermittency_index",
+    ],
+    "risk": [
+        "sku_id",
+        "supplier_id",
+        "supplier_name",
+        "supply_origin_country",
+        "geo_risk_score",
+        "class_code",
+    ],
+    "inventory": [
+        "sku_id",
+        "abc_class",
+        "ved_class",
+        "class_code",
+        "unit_cost_usd",
+        "moq",
+        "service_level_target",
+        "stockout_cost_usd",
+        "salvage_value_usd",
+        "current_on_hand_qty",
+    ],
 }
+
 
 class SKUMaster(BaseModel):
     sku_id: str
@@ -88,7 +284,11 @@ class SKUMaster(BaseModel):
         v = v.strip().upper()
         if len(v) != 3:
             raise ValueError("class_code must have length 3")
-        if v[0] not in {"A", "B", "C"} or v[1] not in {"V", "E", "D"} or v[2] not in {"F", "N", "S"}:
+        if (
+            v[0] not in {"A", "B", "C"}
+            or v[1] not in {"V", "E", "D"}
+            or v[2] not in {"F", "N", "S"}
+        ):
             raise ValueError("class_code must match ABC×VED×FNS pattern")
         return v
 
@@ -101,6 +301,7 @@ class SKUMaster(BaseModel):
             raise ValueError("salvage_value_usd must be < stockout_cost_usd")
         return self
 
+
 def generate_ddl() -> str:
     cols = []
     for name, meta in FIELD_CATALOG.items():
@@ -108,12 +309,14 @@ def generate_ddl() -> str:
         cols.append(f"    {name} {meta['dtype']}{null_sql}")
     return "CREATE TABLE sku_master (\n" + ",\n".join(cols) + "\n);"
 
+
 def validate_pipeline_requirements() -> None:
     catalog_fields = set(FIELD_CATALOG.keys())
     for module, fields in PIPELINE_REQUIREMENTS.items():
         missing = [f for f in fields if f not in catalog_fields]
         if missing:
             raise AssertionError(f"{module} missing fields: {missing}")
+
 
 def generate_html_doc() -> str:
     rows = []
@@ -158,6 +361,7 @@ def generate_html_doc() -> str:
 </body>
 </html>"""
 
+
 def write_artifacts() -> None:
     Path("src/schema").mkdir(parents=True, exist_ok=True)
     Path("docs").mkdir(parents=True, exist_ok=True)
@@ -170,8 +374,12 @@ def write_artifacts() -> None:
     html_doc = generate_html_doc()
 
     Path("src/schema/sku_master_ddl.sql").write_text(ddl, encoding="utf-8")
-    Path("src/schema/sku_master_schema.json").write_text(json.dumps(json_schema, indent=2), encoding="utf-8")
-    Path("data/processed/sku_master_schema.json").write_text(json.dumps(json_schema, indent=2), encoding="utf-8")
+    Path("src/schema/sku_master_schema.json").write_text(
+        json.dumps(json_schema, indent=2), encoding="utf-8"
+    )
+    Path("data/processed/sku_master_schema.json").write_text(
+        json.dumps(json_schema, indent=2), encoding="utf-8"
+    )
     Path("docs/schema_sku_master.html").write_text(html_doc, encoding="utf-8")
 
     mlflow.set_experiment("geo-aware-mro")
@@ -188,10 +396,15 @@ def write_artifacts() -> None:
     print("- src/schema/sku_master_schema.json")
     print("- data/processed/sku_master_schema.json")
     print("- docs/schema_sku_master.html")
-    print(f"- MLflow run: W2D2_sku_master_schema")
+    print("- MLflow run: W2D2_sku_master_schema")
     print("Commit commands:")
-    print("git add src/schema/__init__.py src/schema/sku_master.py src/schema/sku_master_schema.json src/schema/sku_master_ddl.sql docs/schema_sku_master.html data/processed/sku_master_schema.json")
-    print('git commit -m "feat: W2D2 -- SKU Master schema, 28 fields, Pydantic v2, DuckDB DDL"')
+    print(
+        "git add src/schema/__init__.py src/schema/sku_master.py src/schema/sku_master_schema.json src/schema/sku_master_ddl.sql docs/schema_sku_master.html data/processed/sku_master_schema.json"
+    )
+    print(
+        'git commit -m "feat: W2D2 -- SKU Master schema, 28 fields, Pydantic v2, DuckDB DDL"'
+    )
+
 
 if __name__ == "__main__":
     write_artifacts()

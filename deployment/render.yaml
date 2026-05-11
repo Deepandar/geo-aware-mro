@@ -1,0 +1,11 @@
+services:
+
+  - type: web
+
+    name: geo-aware-mro
+
+    env: docker
+
+    plan: free
+
+    autoDeploy: true

@@ -1,5 +1,3 @@
-# src/pdm/rul_engine.py
-
 from __future__ import annotations
 
 import logging
@@ -7,12 +5,10 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
 
 
 class RULEngine:
-
     """
     CMAPSS-inspired Remaining Useful Life engine.
 
@@ -32,19 +28,12 @@ class RULEngine:
         critical_rul_days: int = 30,
     ):
 
-        self.rng = np.random.default_rng(
-            random_seed
-        )
+        self.rng = np.random.default_rng(random_seed)
 
-        self.critical_rul_days = (
-            critical_rul_days
-        )
+        self.critical_rul_days = critical_rul_days
 
         logger.info(
-            (
-                "RULEngine initialised | "
-                "critical_rul=%d"
-            ),
+            ("RULEngine initialised | " "critical_rul=%d"),
             self.critical_rul_days,
         )
 
@@ -81,13 +70,7 @@ class RULEngine:
         # Failure urgency
         # ---------------------------------------------------------
 
-        out["failure_urgency"] = (
-            1.0
-            - (
-                out["rul_days"]
-                / 365.0
-            )
-        )
+        out["failure_urgency"] = 1.0 - (out["rul_days"] / 365.0)
 
         out["failure_urgency"] = np.clip(
             out["failure_urgency"],
@@ -99,10 +82,7 @@ class RULEngine:
         # Critical failure trigger
         # ---------------------------------------------------------
 
-        out["imminent_failure"] = (
-            out["rul_days"]
-            <= self.critical_rul_days
-        )
+        out["imminent_failure"] = out["rul_days"] <= self.critical_rul_days
 
         # ---------------------------------------------------------
         # Hybrid replenishment trigger
@@ -110,10 +90,7 @@ class RULEngine:
 
         if "rop" in out.columns:
 
-            inventory_trigger = (
-                out["demand"]
-                >= out["rop"]
-            )
+            inventory_trigger = out["demand"] >= out["rop"]
 
         else:
 
@@ -123,22 +100,14 @@ class RULEngine:
             )
 
         out["hybrid_replenishment_trigger"] = (
-            inventory_trigger
-            |
-            out["imminent_failure"]
+            inventory_trigger | out["imminent_failure"]
         )
 
         # ---------------------------------------------------------
         # Pull-forward logic
         # ---------------------------------------------------------
 
-        out["rul_risk_multiplier"] = (
-            1.0
-            + (
-                out["failure_urgency"]
-                * 0.75
-            )
-        )
+        out["rul_risk_multiplier"] = 1.0 + (out["failure_urgency"] * 0.75)
 
         # ---------------------------------------------------------
         # Escalate CI if impending failure
@@ -146,18 +115,15 @@ class RULEngine:
 
         if "ci_score" in out.columns:
 
-            imminent_mask = (
-                out["imminent_failure"]
-                == True
-            )
+            imminent_mask = out["imminent_failure"]
 
             out.loc[
                 imminent_mask,
-                "ci_score"
+                "ci_score",
             ] = np.maximum(
                 out.loc[
                     imminent_mask,
-                    "ci_score"
+                    "ci_score",
                 ],
                 0.90,
             )
@@ -169,18 +135,9 @@ class RULEngine:
                 "imminent=%d | "
                 "hybrid_triggers=%d"
             ),
-            float(
-                out["rul_days"].mean()
-            ),
-            int(
-                out["imminent_failure"]
-                .sum()
-            ),
-            int(
-                out[
-                    "hybrid_replenishment_trigger"
-                ].sum()
-            ),
+            float(out["rul_days"].mean()),
+            int(out["imminent_failure"].sum()),
+            int(out["hybrid_replenishment_trigger"].sum()),
         )
 
         return out

@@ -8,9 +8,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-CMAPSS_DIR = Path(
-    "data/external/nasa_cmapss"
-)
+CMAPSS_DIR = Path("data/external/nasa_cmapss")
 
 
 class NASACMAPSSLoader:
@@ -28,19 +26,12 @@ class NASACMAPSSLoader:
 
         self.use_synthetic = use_synthetic
 
-        train_path = (
-            CMAPSS_DIR /
-            f"train_{dataset}.txt"
-        )
+        train_path = CMAPSS_DIR / f"train_{dataset}.txt"
 
-        self._has_real_data = (
-            train_path.exists()
-            and not use_synthetic
-        )
+        self._has_real_data = train_path.exists() and not use_synthetic
 
         logger.info(
-            "NASACMAPSSLoader initialised | "
-            "dataset=%s | synthetic=%s",
+            "NASACMAPSSLoader initialised | " "dataset=%s | synthetic=%s",
             dataset,
             not self._has_real_data,
         )
@@ -69,65 +60,41 @@ class NASACMAPSSLoader:
             360,
         )
 
-        df = pd.DataFrame({
-
-            "unit_id":
-            np.arange(1, n_units + 1),
-
-            "cycle":
-            rng.integers(
-                50,
-                200,
-                n_units,
-            ),
-
-            "rul":
-            rul,
-
-            "rul_critical":
-            rul < self.rul_threshold,
-
-            "rul_warning":
-            (
-                rul <
-                self.rul_threshold * 2
-            )
-            &
-            (
-                rul >=
-                self.rul_threshold
-            ),
-
-            "climate_zone":
-            rng.choice(
-                [
-                    "desert_high_tempo",
-                    "temperate_standard",
-                    "cold_weather",
-                ],
-                size=n_units,
-            ),
-
-            "sortie_rate_tier":
-            rng.choice(
-                [
-                    "high",
-                    "medium",
-                    "low",
-                ],
-                size=n_units,
-            ),
-        })
+        df = pd.DataFrame(
+            {
+                "unit_id": np.arange(1, n_units + 1),
+                "cycle": rng.integers(
+                    50,
+                    200,
+                    n_units,
+                ),
+                "rul": rul,
+                "rul_critical": rul < self.rul_threshold,
+                "rul_warning": (rul < self.rul_threshold * 2)
+                & (rul >= self.rul_threshold),
+                "climate_zone": rng.choice(
+                    [
+                        "desert_high_tempo",
+                        "temperate_standard",
+                        "cold_weather",
+                    ],
+                    size=n_units,
+                ),
+                "sortie_rate_tier": rng.choice(
+                    [
+                        "high",
+                        "medium",
+                        "low",
+                    ],
+                    size=n_units,
+                ),
+            }
+        )
 
         logger.info(
-            "Synthetic CMAPSS generated | "
-            "units=%d | critical=%d",
+            "Synthetic CMAPSS generated | " "units=%d | critical=%d",
             len(df),
-            int(
-                df[
-                    "rul_critical"
-                ].sum()
-            ),
+            int(df["rul_critical"].sum()),
         )
 
         return df
@@ -141,9 +108,7 @@ class NASACMAPSSLoader:
         n_units: int = 100,
     ) -> pd.DataFrame:
 
-        return self._generate_synthetic(
-            n_units=n_units
-        )
+        return self._generate_synthetic(n_units=n_units)
 
     # -----------------------------------------------------
     # MERGE TO SKU MASTER
@@ -168,30 +133,22 @@ class NASACMAPSSLoader:
 
         out["rul_signal"] = rul_sample
 
-        out["pull_trigger"] = (
-            rul_sample <
-            self.rul_threshold
-        )
+        out["pull_trigger"] = rul_sample < self.rul_threshold
 
         out["climate_zone"] = rng.choice(
-            rul_df[
-                "climate_zone"
-            ].values,
+            rul_df["climate_zone"].values,
             size=len(out),
             replace=True,
         )
 
         out["sortie_rate_tier"] = rng.choice(
-            rul_df[
-                "sortie_rate_tier"
-            ].values,
+            rul_df["sortie_rate_tier"].values,
             size=len(out),
             replace=True,
         )
 
         logger.info(
-            "RUL merged to SKU Master | "
-            "mean_RUL=%.1f",
+            "RUL merged to SKU Master | " "mean_RUL=%.1f",
             out["rul_signal"].mean(),
         )
 

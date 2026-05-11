@@ -1,6 +1,4 @@
-from src.optimization.nlp_lifecycle import (
-    KKTLifecycleOptimizer
-)
+from src.optimization.nlp_lifecycle import KKTLifecycleOptimizer
 
 
 def test_single_sku():
@@ -8,17 +6,11 @@ def test_single_sku():
     opt = KKTLifecycleOptimizer()
 
     row = {
-
         "item_id": "SKU_TEST",
-
         "unit_cost": 1000.0,
-
         "q_star": 10.0,
-
         "dp_q_star": 12.0,
-
         "geo_risk_score": 0.2,
-
         "item_age_years": 2.0,
     }
 

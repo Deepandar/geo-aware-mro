@@ -3,12 +3,14 @@ import numpy as np
 from src.rl.mro_env import MROInventoryEnv, GYM_AVAILABLE
 from src.rl.rl_reorder_agent import PPOReorderAgent
 
+
 @pytest.mark.skipif(not GYM_AVAILABLE, reason="gym not installed")
 def test_env_resets():
     env = MROInventoryEnv(T=10)
     obs, info = env.reset(seed=0)
     assert obs.shape == (4,)
     assert ((obs >= 0.0) & (obs <= 1.0)).all()
+
 
 @pytest.mark.skipif(not GYM_AVAILABLE, reason="gym not installed")
 def test_env_terminates_at_T():
@@ -23,9 +25,11 @@ def test_env_terminates_at_T():
         steps += 1
     assert steps == T
 
+
 def test_agent_initializes():
     agent = PPOReorderAgent(env_params={"T": 10}, seed=42)
     assert agent.total_timesteps > 0
+
 
 @pytest.mark.skipif(not GYM_AVAILABLE, reason="gym not installed")
 def test_newsvendor_baseline_eval():

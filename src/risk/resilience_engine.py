@@ -7,12 +7,10 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
 
 
 class ResilienceEngine:
-
     """
     Coupled resilience recovery engine (v1.4)
 
@@ -41,9 +39,7 @@ class ResilienceEngine:
 
         self.fatigue_beta = fatigue_beta
 
-        self.recovery_threshold = (
-            recovery_threshold
-        )
+        self.recovery_threshold = recovery_threshold
 
         logger.info(
             (
@@ -71,9 +67,7 @@ class ResilienceEngine:
 
         out = df.copy()
 
-        active_mask = (
-            out["scenario_active"] == True
-        )
+        active_mask = out["scenario_active"]
 
         # ---------------------------------------------------------
         # No active disruptions
@@ -81,15 +75,11 @@ class ResilienceEngine:
 
         if not active_mask.any():
 
-            logger.info(
-                "No active disruptions detected"
-            )
+            logger.info("No active disruptions detected")
 
             out["resilience_multiplier"] = 1.0
 
-            out["lambda_eff"] = (
-                self.decay_lambda
-            )
+            out["lambda_eff"] = self.decay_lambda
 
             return out
 
@@ -97,96 +87,48 @@ class ResilienceEngine:
         # Compute disruption fatigue
         # ---------------------------------------------------------
 
-        disruption_load = int(
-            active_mask.sum()
-        )
+        disruption_load = int(active_mask.sum())
 
-        lambda_eff = (
-            self.decay_lambda
-            / (
-                1.0
-                + (
-                    self.fatigue_beta
-                    * disruption_load
-                )
-            )
-        )
+        lambda_eff = self.decay_lambda / (1.0 + (self.fatigue_beta * disruption_load))
 
         # ---------------------------------------------------------
         # Preserve original disrupted state
         # ---------------------------------------------------------
 
-        if (
-            "initial_disrupted_lt"
-            not in out.columns
-        ):
+        if "initial_disrupted_lt" not in out.columns:
 
-            out[
-                "initial_disrupted_lt"
-            ] = out["lead_time_days"]
+            out["initial_disrupted_lt"] = out["lead_time_days"]
 
-        initial_disrupted_lt = (
-            out.loc[
-                active_mask,
-                "initial_disrupted_lt"
-            ]
-            .astype(float)
+        initial_disrupted_lt = out.loc[active_mask, "initial_disrupted_lt"].astype(
+            float
         )
 
-        initial_mult = (
-            out.loc[
-                active_mask,
-                "scenario_lt_multiplier"
-            ]
-            .astype(float)
-        )
+        initial_mult = out.loc[active_mask, "scenario_lt_multiplier"].astype(float)
 
         # ---------------------------------------------------------
         # Coupled exponential decay
         # ---------------------------------------------------------
 
-        decay_factor = np.exp(
-            -lambda_eff * sim_time
-        )
+        decay_factor = np.exp(-lambda_eff * sim_time)
 
-        recovered_mult = (
-            1.0
-            + (
-                initial_mult - 1.0
-            ) * decay_factor
-        )
+        recovered_mult = 1.0 + (initial_mult - 1.0) * decay_factor
 
         # ---------------------------------------------------------
         # Persist metrics
         # ---------------------------------------------------------
 
-        out.loc[
-            active_mask,
-            "lambda_eff"
-        ] = lambda_eff
+        out.loc[active_mask, "lambda_eff"] = lambda_eff
 
-        out.loc[
-            active_mask,
-            "disruption_load"
-        ] = disruption_load
+        out.loc[active_mask, "disruption_load"] = disruption_load
 
-        out.loc[
-            active_mask,
-            "resilience_multiplier"
-        ] = recovered_mult
+        out.loc[active_mask, "resilience_multiplier"] = recovered_mult
 
         # ---------------------------------------------------------
         # IMPORTANT:
         # Recover from ORIGINAL disrupted state
         # ---------------------------------------------------------
 
-        out.loc[
-            active_mask,
-            "lead_time_days"
-        ] = (
-            initial_disrupted_lt
-            * recovered_mult
-        )
+        out.loc[active_mask, "lead_time_days"] = initial_disrupted_lt * recovered_mult
 
         # ---------------------------------------------------------
         # Persistent geo-risk coupling
@@ -194,21 +136,11 @@ class ResilienceEngine:
 
         if "geo_risk_score" in out.columns:
 
-            persistent_geo = (
-                out.loc[
-                    active_mask,
-                    "geo_risk_score"
-                ]
-                * (
-                    0.90
-                    + 0.10 * decay_factor
-                )
+            persistent_geo = out.loc[active_mask, "geo_risk_score"] * (
+                0.90 + 0.10 * decay_factor
             )
 
-            out.loc[
-                active_mask,
-                "geo_risk_score"
-            ] = np.clip(
+            out.loc[active_mask, "geo_risk_score"] = np.clip(
                 persistent_geo,
                 0.0,
                 1.0,
@@ -218,26 +150,13 @@ class ResilienceEngine:
         # Recovery completion logic
         # ---------------------------------------------------------
 
-        recovered_mask = (
-            recovered_mult
-            <= self.recovery_threshold
-        )
+        recovered_mask = recovered_mult <= self.recovery_threshold
 
-        recovered_indices = (
-            out.loc[
-                active_mask
-            ].index[recovered_mask]
-        )
+        recovered_indices = out.loc[active_mask].index[recovered_mask]
 
-        out.loc[
-            recovered_indices,
-            "scenario_active"
-        ] = False
+        out.loc[recovered_indices, "scenario_active"] = False
 
-        out.loc[
-            recovered_indices,
-            "active_scenario"
-        ] = "RECOVERED"
+        out.loc[recovered_indices, "active_scenario"] = "RECOVERED"
 
         # ---------------------------------------------------------
         # Diagnostics
@@ -251,17 +170,10 @@ class ResilienceEngine:
                 "lambda_eff=%.4f | "
                 "mean_multiplier=%.3f"
             ),
-            int(
-                out["scenario_active"].sum()
-            ),
+            int(out["scenario_active"].sum()),
             len(recovered_indices),
             lambda_eff,
-            float(
-                out.loc[
-                    active_mask,
-                    "resilience_multiplier"
-                ].mean()
-            ),
+            float(out.loc[active_mask, "resilience_multiplier"].mean()),
         )
 
         return out
@@ -285,47 +197,18 @@ class ResilienceEngine:
 
         if missing:
 
-            raise ValueError(
-                (
-                    "ResilienceEngine missing "
-                    f"columns: {missing}"
-                )
-            )
+            raise ValueError(("ResilienceEngine missing " f"columns: {missing}"))
 
         if df.empty:
 
-            raise ValueError(
-                (
-                    "ResilienceEngine received "
-                    "empty dataframe"
-                )
-            )
+            raise ValueError(("ResilienceEngine received " "empty dataframe"))
 
-        if (
-            df["lead_time_days"] < 0
-        ).any():
+        if (df["lead_time_days"] < 0).any():
 
-            raise ValueError(
-                (
-                    "Negative lead times "
-                    "detected"
-                )
-            )
+            raise ValueError(("Negative lead times " "detected"))
 
-        if (
-            "scenario_lt_multiplier"
-            in df.columns
-        ):
+        if "scenario_lt_multiplier" in df.columns:
 
-            if (
-                df[
-                    "scenario_lt_multiplier"
-                ] < 1.0
-            ).any():
+            if (df["scenario_lt_multiplier"] < 1.0).any():
 
-                raise ValueError(
-                    (
-                        "Scenario multipliers "
-                        "must be >= 1.0"
-                    )
-                )
+                raise ValueError(("Scenario multipliers " "must be >= 1.0"))

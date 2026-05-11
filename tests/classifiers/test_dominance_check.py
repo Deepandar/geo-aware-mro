@@ -4,15 +4,17 @@ from src.classifiers.dominance_check import DominanceChecker
 
 
 def test_detects_dominance():
-    df = pd.DataFrame({
-        "annual_consumption_value": [
-            100000,
-            1000,
-            800,
-            500,
-            200,
-        ]
-    })
+    df = pd.DataFrame(
+        {
+            "annual_consumption_value": [
+                100000,
+                1000,
+                800,
+                500,
+                200,
+            ]
+        }
+    )
 
     _, result = DominanceChecker().check_and_remediate(df)
 
@@ -20,15 +22,17 @@ def test_detects_dominance():
 
 
 def test_creates_acv_for_abc():
-    df = pd.DataFrame({
-        "annual_consumption_value": [
-            100000,
-            1000,
-            800,
-            500,
-            200,
-        ]
-    })
+    df = pd.DataFrame(
+        {
+            "annual_consumption_value": [
+                100000,
+                1000,
+                800,
+                500,
+                200,
+            ]
+        }
+    )
 
     out, _ = DominanceChecker().check_and_remediate(df)
 
@@ -36,15 +40,17 @@ def test_creates_acv_for_abc():
 
 
 def test_remediation_changes_distribution():
-    df = pd.DataFrame({
-        "annual_consumption_value": [
-            100000,
-            1000,
-            800,
-            500,
-            200,
-        ]
-    })
+    df = pd.DataFrame(
+        {
+            "annual_consumption_value": [
+                100000,
+                1000,
+                800,
+                500,
+                200,
+            ]
+        }
+    )
 
     out, _ = DominanceChecker().check_and_remediate(df)
 

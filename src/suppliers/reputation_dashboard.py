@@ -15,19 +15,19 @@ import plotly.graph_objects as go
 logger = logging.getLogger(__name__)
 
 BG, CARD, BORDER = "#0d1117", "#161b22", "#30363d"
-TEXT, MUTED      = "#e6edf3", "#8b949e"
+TEXT, MUTED = "#e6edf3", "#8b949e"
 
-BLUE   = "#58a6ff"
-GREEN  = "#3fb950"
+BLUE = "#58a6ff"
+GREEN = "#3fb950"
 ORANGE = "#e3b341"
-RED    = "#f85149"
+RED = "#f85149"
 PURPLE = "#8957e5"
 
 ACTION_COLORS = {
-    "Continue":         GREEN,
-    "Monitor":          BLUE,
-    "Warning":          ORANGE,
-    "Renegotiate":      PURPLE,
+    "Continue": GREEN,
+    "Monitor": BLUE,
+    "Warning": ORANGE,
+    "Renegotiate": PURPLE,
     "Mandatory Switch": RED,
 }
 
@@ -52,34 +52,23 @@ LAYOUT = dict(
 # REPUTATION MATRIX
 # =========================================================
 
+
 def fig_reputation_matrix(
     df: pd.DataFrame,
     n_display: int = 100,
 ) -> go.Figure:
 
-    sample = (
-        df.nlargest(n_display, "ci_score")
-        if len(df) > n_display
-        else df.copy()
-    )
+    sample = df.nlargest(n_display, "ci_score") if len(df) > n_display else df.copy()
 
     sample = sample.sort_values(
         "ci_score",
         ascending=False,
     ).reset_index(drop=True)
 
-    z = (
-        sample["reputation_score"]
-        .values
-        .reshape(-1, 1)
-    )
+    z = sample["reputation_score"].values.reshape(-1, 1)
 
     labels = [
-
-        f"★ {row.item_id}"
-        if row.grim_trigger_fired
-        else str(row.item_id)
-
+        f"★ {row.item_id}" if row.grim_trigger_fired else str(row.item_id)
         for _, row in sample.iterrows()
     ]
 
@@ -96,10 +85,7 @@ def fig_reputation_matrix(
             ],
             zmin=0,
             zmax=1,
-            hovertemplate=(
-                "SKU: %{y}<br>"
-                "Rep: %{z:.3f}<extra></extra>"
-            ),
+            hovertemplate=("SKU: %{y}<br>" "Rep: %{z:.3f}<extra></extra>"),
         )
     )
 
@@ -121,6 +107,7 @@ def fig_reputation_matrix(
 # =========================================================
 # DELTA SENSITIVITY
 # =========================================================
+
 
 def fig_delta_sensitivity(
     gains: list[float],
@@ -165,9 +152,8 @@ def fig_delta_sensitivity(
 # GRIM TRIGGER RATE
 # =========================================================
 
-def fig_trigger_firing_by_class(
-    df: pd.DataFrame
-) -> go.Figure:
+
+def fig_trigger_firing_by_class(df: pd.DataFrame) -> go.Figure:
 
     classes = [
         "Low",
@@ -180,18 +166,9 @@ def fig_trigger_firing_by_class(
 
     for cls in classes:
 
-        sub = df[
-            df.supplier_risk_class == cls
-        ]
+        sub = df[df.supplier_risk_class == cls]
 
-        vals.append(
-            float(
-                sub["grim_trigger_fired"]
-                .mean()
-            )
-            if len(sub) > 0
-            else 0.0
-        )
+        vals.append(float(sub["grim_trigger_fired"].mean()) if len(sub) > 0 else 0.0)
 
     fig = go.Figure(
         go.Bar(
@@ -223,23 +200,19 @@ def fig_trigger_firing_by_class(
 # ACTION DISTRIBUTION
 # =========================================================
 
-def fig_action_distribution(
-    df: pd.DataFrame
-) -> go.Figure:
 
-    vc = (
-        df["recommended_action"]
-        .value_counts()
-    )
+def fig_action_distribution(df: pd.DataFrame) -> go.Figure:
+
+    vc = df["recommended_action"].value_counts()
 
     labels = vc.index.tolist()
 
     colors = [
         ACTION_COLORS.get(
-            l,
+            label,
             BLUE,
         )
-        for l in labels
+        for label in labels
     ]
 
     fig = go.Figure(
@@ -269,9 +242,8 @@ def fig_action_distribution(
 # GEO-RISK VS REPUTATION
 # =========================================================
 
-def fig_reputation_vs_geo_risk(
-    df: pd.DataFrame
-) -> go.Figure:
+
+def fig_reputation_vs_geo_risk(df: pd.DataFrame) -> go.Figure:
 
     fig = go.Figure(
         go.Scatter(
@@ -315,28 +287,16 @@ def fig_reputation_vs_geo_risk(
 # FULL REPORT
 # =========================================================
 
-def generate_reputation_report(
-    df: pd.DataFrame
-) -> dict:
+
+def generate_reputation_report(df: pd.DataFrame) -> dict:
 
     return {
-
-        "reputation_matrix":
-            fig_reputation_matrix(df),
-
-        "delta_sensitivity":
-            fig_delta_sensitivity(
-                gains=list(range(5,101,5)),
-                surpluses=list(range(10,201,10)),
-            ),
-
-        "trigger_by_class":
-            fig_trigger_firing_by_class(df),
-
-        "action_distribution":
-            fig_action_distribution(df),
-
-        "rep_vs_geo_risk":
-            fig_reputation_vs_geo_risk(df),
+        "reputation_matrix": fig_reputation_matrix(df),
+        "delta_sensitivity": fig_delta_sensitivity(
+            gains=list(range(5, 101, 5)),
+            surpluses=list(range(10, 201, 10)),
+        ),
+        "trigger_by_class": fig_trigger_firing_by_class(df),
+        "action_distribution": fig_action_distribution(df),
+        "rep_vs_geo_risk": fig_reputation_vs_geo_risk(df),
     }
-

@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 CRITICAL_CATEGORIES = {
     "Safety",
     "Electrical",
@@ -13,9 +12,7 @@ def classify_ved(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     if "equipment_density_score" not in df.columns:
-        raise ValueError(
-            "Missing required column: equipment_density_score"
-        )
+        raise ValueError("Missing required column: equipment_density_score")
 
     def assign(row):
 

@@ -33,26 +33,16 @@ class DemandProcess:
         p = self.params
 
         if p.fns_class == "F":
-            return float(
-                self.rng.poisson(
-                    lam=max(p.mean_demand, 0.1)
-                )
-            )
+            return float(self.rng.poisson(lam=max(p.mean_demand, 0.1)))
 
         if p.fns_class == "N":
 
-            var = p.std_demand ** 2
+            var = p.std_demand**2
 
             if var <= p.mean_demand:
-                return float(
-                    self.rng.poisson(
-                        lam=max(p.mean_demand, 0.1)
-                    )
-                )
+                return float(self.rng.poisson(lam=max(p.mean_demand, 0.1)))
 
-            r = p.mean_demand ** 2 / (
-                var - p.mean_demand
-            )
+            r = p.mean_demand**2 / (var - p.mean_demand)
 
             prob = r / (r + p.mean_demand)
 
@@ -74,23 +64,14 @@ class DemandProcess:
         if self.rng.random() < zero_prob:
             return 0.0
 
-        return float(
-            self.rng.poisson(
-                lam=max(p.mean_demand, 0.1)
-            )
-        )
+        return float(self.rng.poisson(lam=max(p.mean_demand, 0.1)))
 
     def sample_batch(
         self,
         n_periods: int,
     ) -> np.ndarray:
 
-        return np.array(
-            [
-                self.sample()
-                for _ in range(n_periods)
-            ]
-        )
+        return np.array([self.sample() for _ in range(n_periods)])
 
 
 def build_demand_process(
@@ -99,25 +80,12 @@ def build_demand_process(
 ) -> DemandProcess:
 
     params = DemandParams(
-        item_id=str(
-            row.get("item_id", "UNKNOWN")
-        ),
-        fns_class=str(
-            row.get("fns_class", "N")
-        ),
-        mean_demand=float(
-            row.get("mean_demand", 10.0)
-        ),
-        std_demand=float(
-            row.get("std_demand", 5.0)
-        ),
-        adi=float(
-            row.get("adi", 1.5)
-        ),
-        cv_squared=float(
-            row.get("cv_squared", 0.5)
-        ),
+        item_id=str(row.get("item_id", "UNKNOWN")),
+        fns_class=str(row.get("fns_class", "N")),
+        mean_demand=float(row.get("mean_demand", 10.0)),
+        std_demand=float(row.get("std_demand", 5.0)),
+        adi=float(row.get("adi", 1.5)),
+        cv_squared=float(row.get("cv_squared", 0.5)),
     )
 
     return DemandProcess(params, rng)
-

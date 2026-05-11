@@ -4,9 +4,7 @@ from src.classifiers.location_scorer import LocationScorer
 
 
 def test_location_scores_exist():
-    df = pd.DataFrame({
-        "depot_tier": ["Forward", "Border", "Rear"]
-    })
+    df = pd.DataFrame({"depot_tier": ["Forward", "Border", "Rear"]})
 
     out = LocationScorer().score(df)
 
@@ -15,9 +13,7 @@ def test_location_scores_exist():
 
 
 def test_forward_has_higher_score_than_rear():
-    df = pd.DataFrame({
-        "depot_tier": ["Forward", "Rear"]
-    })
+    df = pd.DataFrame({"depot_tier": ["Forward", "Rear"]})
 
     out = LocationScorer().score(df)
 
@@ -28,9 +24,7 @@ def test_forward_has_higher_score_than_rear():
 
 
 def test_location_score_is_normalized():
-    df = pd.DataFrame({
-        "depot_tier": ["Forward", "Border", "Rear"]
-    })
+    df = pd.DataFrame({"depot_tier": ["Forward", "Border", "Rear"]})
 
     out = LocationScorer().score(df)
 

@@ -44,10 +44,7 @@ def setup_mlflow() -> str:
     # Local tracking directory
     # ---------------------------------------------------------
 
-    tracking_dir = (
-        Path("mlruns")
-        .absolute()
-    )
+    tracking_dir = Path("mlruns").absolute()
 
     tracking_dir.mkdir(
         parents=True,
@@ -58,19 +55,12 @@ def setup_mlflow() -> str:
     # Windows-safe file URI
     # ---------------------------------------------------------
 
-    tracking_uri = (
-        tracking_dir.as_uri()
-    )
+    tracking_uri = tracking_dir.as_uri()
 
-    mlflow.set_tracking_uri(
-        tracking_uri
-    )
+    mlflow.set_tracking_uri(tracking_uri)
 
     logger.info(
-        (
-            "MLflow tracking URI set | "
-            "%s"
-        ),
+        ("MLflow tracking URI set | " "%s"),
         tracking_uri,
     )
 
@@ -78,47 +68,29 @@ def setup_mlflow() -> str:
     # Create / load experiment
     # ---------------------------------------------------------
 
-    experiment = (
-        mlflow.get_experiment_by_name(
-            EXPERIMENT_NAME
-        )
-    )
+    experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
 
     if experiment is None:
 
-        experiment_id = (
-            mlflow.create_experiment(
-                EXPERIMENT_NAME
-            )
-        )
+        experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
 
         logger.info(
-            (
-                "Created MLflow experiment | "
-                "name=%s | id=%s"
-            ),
+            ("Created MLflow experiment | " "name=%s | id=%s"),
             EXPERIMENT_NAME,
             experiment_id,
         )
 
     else:
 
-        experiment_id = (
-            experiment.experiment_id
-        )
+        experiment_id = experiment.experiment_id
 
         logger.info(
-            (
-                "Using existing experiment | "
-                "name=%s | id=%s"
-            ),
+            ("Using existing experiment | " "name=%s | id=%s"),
             EXPERIMENT_NAME,
             experiment_id,
         )
 
-    mlflow.set_experiment(
-        EXPERIMENT_NAME
-    )
+    mlflow.set_experiment(EXPERIMENT_NAME)
 
     # ---------------------------------------------------------
     # Lightweight smoke test
@@ -126,15 +98,9 @@ def setup_mlflow() -> str:
 
     try:
 
-        logger.info(
-            "Running MLflow smoke test..."
-        )
+        logger.info("Running MLflow smoke test...")
 
-        with mlflow.start_run(
-            run_name=(
-                "mlflow_setup_smoke_test"
-            )
-        ):
+        with mlflow.start_run(run_name=("mlflow_setup_smoke_test")):
 
             mlflow.log_param(
                 "environment",
@@ -146,26 +112,16 @@ def setup_mlflow() -> str:
                 1.0,
             )
 
-        logger.info(
-            (
-                "MLflow smoke test "
-                "completed successfully"
-            )
-        )
+        logger.info(("MLflow smoke test " "completed successfully"))
 
     except Exception as exc:
 
         logger.warning(
-            (
-                "MLflow smoke test failed | "
-                "%s"
-            ),
+            ("MLflow smoke test failed | " "%s"),
             str(exc),
         )
 
-    logger.info(
-        "MLflow setup complete"
-    )
+    logger.info("MLflow setup complete")
 
     return tracking_uri
 

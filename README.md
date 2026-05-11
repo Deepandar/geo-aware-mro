@@ -1,4 +1,3 @@
-cat > README.md << 'EOF'
 # Geo-Aware MRO Decision Intelligence System
 
 ## Multi-Echelon Optimization · Geopolitical Risk Intelligence · AI-Driven Supply Chain Resilience
@@ -503,4 +502,3 @@ This platform serves as:
 # License
 
 This repository is intended for research, academic experimentation, and enterprise architecture prototyping. Further licensing and deployment policies may evolve alongside productionization efforts.
-EOF

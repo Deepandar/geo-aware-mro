@@ -52,9 +52,9 @@ def test_qstar_non_negative(
     replenishment quantities exist.
     """
 
-    assert (
-        pipeline_output["q_star"] >= 0
-    ).all()
+    assert (pipeline_output["q_star"] >= 0).all()
+
+
 def test_qstar_responsiveness(
     pipeline_output,
 ):
@@ -64,8 +64,8 @@ def test_qstar_responsiveness(
     decisions for at least some SKUs.
     """
 
-    assert (
-        pipeline_output["q_star"] > 0
-    ).any()
+    assert (pipeline_output["q_star"] > 0).any()
+
+
 def test_rop_positive(pipeline_output):
     assert (pipeline_output["rop"] > 0).all()

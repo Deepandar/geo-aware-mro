@@ -65,20 +65,14 @@ class GeoAwareMROEnv:
 
             inventory += 200
 
-        fill_rate = (
-            fulfilled_demand / total_demand
-            if total_demand > 0
-            else 1.0
-        )
+        fill_rate = fulfilled_demand / total_demand if total_demand > 0 else 1.0
 
         return {
             "fill_rate": float(fill_rate),
             "tsl_compliance": float(fill_rate),
             "stockout_cost": float(stockout_cost),
             "holding_cost": float(holding_cost),
-            "total_cost": float(
-                stockout_cost + holding_cost
-            ),
+            "total_cost": float(stockout_cost + holding_cost),
             "cvs_fixed": bool(fill_rate > 0.8),
         }
 
@@ -97,28 +91,16 @@ class GeoAwareMROEnv:
 
             metrics = self.run(sku_df)
 
-            outputs.append({
-
-                "trial_id":
-                    trial_id,
-
-                "mean_fill_rate":
-                    metrics["fill_rate"],
-
-                "total_cost":
-                    metrics["total_cost"],
-
-                "stockout_cost":
-                    metrics["stockout_cost"],
-
-                "holding_cost":
-                    metrics["holding_cost"],
-
-                "tsl_compliance":
-                    metrics["tsl_compliance"],
-
-                "cvs_fixed":
-                    metrics["cvs_fixed"],
-            })
+            outputs.append(
+                {
+                    "trial_id": trial_id,
+                    "mean_fill_rate": metrics["fill_rate"],
+                    "total_cost": metrics["total_cost"],
+                    "stockout_cost": metrics["stockout_cost"],
+                    "holding_cost": metrics["holding_cost"],
+                    "tsl_compliance": metrics["tsl_compliance"],
+                    "cvs_fixed": metrics["cvs_fixed"],
+                }
+            )
 
         return pd.DataFrame(outputs)

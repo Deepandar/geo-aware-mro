@@ -4,9 +4,7 @@ from src.classifiers.ltr_scorer import LTRScorer
 
 
 def test_ltr_score_exists():
-    df = pd.DataFrame({
-        "lead_time_days": [10, 30, 90]
-    })
+    df = pd.DataFrame({"lead_time_days": [10, 30, 90]})
 
     out = LTRScorer().compute(df)
 
@@ -15,9 +13,7 @@ def test_ltr_score_exists():
 
 
 def test_ltr_is_monotonic():
-    df = pd.DataFrame({
-        "lead_time_days": [10, 30, 90]
-    })
+    df = pd.DataFrame({"lead_time_days": [10, 30, 90]})
 
     out = LTRScorer().compute(df)
 
@@ -26,9 +22,7 @@ def test_ltr_is_monotonic():
 
 
 def test_ltr_score_is_bounded():
-    df = pd.DataFrame({
-        "lead_time_days": [10, 30, 90]
-    })
+    df = pd.DataFrame({"lead_time_days": [10, 30, 90]})
 
     out = LTRScorer().compute(df)
 

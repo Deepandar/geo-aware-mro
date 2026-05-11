@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # Simulation Result
 # =========================================================
 
+
 @dataclass
 class SimulationResult:
 
@@ -47,67 +48,43 @@ class SimulationResult:
 # Monte Carlo Engine
 # =========================================================
 
+
 class MonteCarloEngine:
 
     def __init__(
-
         self,
-
         horizon_days: int = 30,
-
         holding_cost_rate: float = 1.0,
-
         stockout_penalty: float = 25.0,
-
         seed: int = 42,
-
     ):
 
         self.horizon_days = horizon_days
 
-        self.holding_cost_rate = (
-            holding_cost_rate
-        )
+        self.holding_cost_rate = holding_cost_rate
 
-        self.stockout_penalty = (
-            stockout_penalty
-        )
+        self.stockout_penalty = stockout_penalty
 
-        self.rng = np.random.default_rng(
-            seed
-        )
+        self.rng = np.random.default_rng(seed)
 
-        logger.info(
-            "MonteCarloEngine initialised"
-        )
+        logger.info("MonteCarloEngine initialised")
 
     # -----------------------------------------------------
     # Dynamic simulation
     # -----------------------------------------------------
 
     def run_policy_simulation(
-
         self,
-
         df: pd.DataFrame,
-
     ) -> pd.DataFrame:
 
-        sku_ids = (
-            df["item_id"]
-            .astype(str)
-            .tolist()
-        )
+        sku_ids = df["item_id"].astype(str).tolist()
 
         # -------------------------------------------------
         # Build correlation engine
         # -------------------------------------------------
 
-        propagator = (
-            CorrelationPropagator(
-                sku_ids
-            )
-        )
+        propagator = CorrelationPropagator(sku_ids)
 
         timeline = ShockTimeline(
             T=self.horizon_days,
@@ -118,9 +95,7 @@ class MonteCarloEngine:
         # Apply all scenarios
         # -------------------------------------------------
 
-        for scenario in (
-            SCENARIO_LIBRARY
-        ):
+        for scenario in SCENARIO_LIBRARY:
 
             timeline.apply_scenario(
                 scenario,
@@ -137,16 +112,11 @@ class MonteCarloEngine:
         for _, row in df.iterrows():
 
             result = self.simulate_sku(
-
                 row=row,
-
                 timeline=timeline,
-
             )
 
-            results.append(
-                result.__dict__
-            )
+            results.append(result.__dict__)
 
         return pd.DataFrame(results)
 
@@ -155,18 +125,12 @@ class MonteCarloEngine:
     # -----------------------------------------------------
 
     def simulate_sku(
-
         self,
-
         row: pd.Series,
-
         timeline: ShockTimeline,
-
     ) -> SimulationResult:
 
-        sku_id = str(
-            row["item_id"]
-        )
+        sku_id = str(row["item_id"])
 
         mean_demand = float(
             row.get(
@@ -220,49 +184,34 @@ class MonteCarloEngine:
         # Daily simulation loop
         # -------------------------------------------------
 
-        for t in range(
-            self.horizon_days
-        ):
+        for t in range(self.horizon_days):
 
             # ---------------------------------------------
             # Receive arrivals
             # ---------------------------------------------
 
-            arrivals = [
-                qty
-                for arr_t, qty
-                in pipeline_orders
-                if arr_t <= t
-            ]
+            arrivals = [qty for arr_t, qty in pipeline_orders if arr_t <= t]
 
             inventory += sum(arrivals)
 
             pipeline_orders = [
-                (arr_t, qty)
-                for arr_t, qty
-                in pipeline_orders
-                if arr_t > t
+                (arr_t, qty) for arr_t, qty in pipeline_orders if arr_t > t
             ]
 
             # ---------------------------------------------
             # Get dynamic shock multipliers
             # ---------------------------------------------
 
-            lt_mult, dem_mult = (
-                timeline.get_multipliers(
-                    sku_id,
-                    t,
-                )
+            lt_mult, dem_mult = timeline.get_multipliers(
+                sku_id,
+                t,
             )
 
             # ---------------------------------------------
             # Shocked demand
             # ---------------------------------------------
 
-            shocked_mean = (
-                mean_demand
-                * dem_mult
-            )
+            shocked_mean = mean_demand * dem_mult
 
             demand = self.rng.poisson(
                 max(
@@ -294,11 +243,7 @@ class MonteCarloEngine:
                 demand,
             )
 
-            unmet = (
-                demand
-                + backlog
-                - shipped
-            )
+            unmet = demand + backlog - shipped
 
             backlog = unmet
 
@@ -318,27 +263,15 @@ class MonteCarloEngine:
                 * self.holding_cost_rate
             )
 
-            stockout_cost += (
-                unmet
-                * self.stockout_penalty
-            )
+            stockout_cost += unmet * self.stockout_penalty
 
-            inventory_trace.append(
-                inventory
-            )
+            inventory_trace.append(inventory)
 
             # ---------------------------------------------
             # Replenishment policy
             # ---------------------------------------------
 
-            inventory_position = (
-                inventory
-                + sum(
-                    qty
-                    for _, qty
-                    in pipeline_orders
-                )
-            )
+            inventory_position = inventory + sum(qty for _, qty in pipeline_orders)
 
             if inventory_position <= rop:
                 # -----------------------------------------
@@ -373,18 +306,10 @@ class MonteCarloEngine:
 
                 shocked_lt = max(
                     1,
-                    int(
-                        round(
-                            safe_base_lt
-                            * safe_lt_mult
-                        )
-                    ),
+                    int(round(safe_base_lt * safe_lt_mult)),
                 )
 
-
-                arrival_day = (
-                    t + shocked_lt
-                )
+                arrival_day = t + shocked_lt
 
                 pipeline_orders.append(
                     (
@@ -399,70 +324,23 @@ class MonteCarloEngine:
         # KPIs
         # -------------------------------------------------
 
-        fill_rate = (
-            fulfilled / total_demand
-            if total_demand > 0
-            else 1.0
-        )
+        fill_rate = fulfilled / total_demand if total_demand > 0 else 1.0
 
-        service_level = (
-            1.0
-            - (
-                stockout_days
-                / self.horizon_days
-            )
-        )
+        service_level = 1.0 - (stockout_days / self.horizon_days)
 
-        avg_inventory = float(
-            np.mean(
-                inventory_trace
-            )
-        )
+        avg_inventory = float(np.mean(inventory_trace))
 
-        total_cost = (
-            holding_cost
-            + stockout_cost
-        )
+        total_cost = holding_cost + stockout_cost
 
         return SimulationResult(
-
-            item_id=int(
-                row["item_id"]
-            ),
-
-            fill_rate=float(
-                fill_rate
-            ),
-
-            service_level=float(
-                service_level
-            ),
-
-            stockout_days=int(
-                stockout_days
-            ),
-
-            avg_inventory=float(
-                avg_inventory
-            ),
-
-            holding_cost=float(
-                holding_cost
-            ),
-
-            stockout_cost=float(
-                stockout_cost
-            ),
-
-            total_cost=float(
-                total_cost
-            ),
-
-            orders_placed=int(
-                orders_placed
-            ),
-
-            final_backlog=float(
-                backlog
-            ),
+            item_id=int(row["item_id"]),
+            fill_rate=float(fill_rate),
+            service_level=float(service_level),
+            stockout_days=int(stockout_days),
+            avg_inventory=float(avg_inventory),
+            holding_cost=float(holding_cost),
+            stockout_cost=float(stockout_cost),
+            total_cost=float(total_cost),
+            orders_placed=int(orders_placed),
+            final_backlog=float(backlog),
         )

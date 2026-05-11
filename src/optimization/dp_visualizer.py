@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-
 
 # =========================================================
 # THEME
@@ -25,6 +23,7 @@ LAYOUT = dict(
 # Q* DISTRIBUTION
 # =========================================================
 
+
 def fig_qstar_distribution(
     df: pd.DataFrame,
 ):
@@ -36,9 +35,7 @@ def fig_qstar_distribution(
     missing = required - set(df.columns)
 
     if missing:
-        raise ValueError(
-            f"Missing columns: {missing}"
-        )
+        raise ValueError(f"Missing columns: {missing}")
 
     fig = go.Figure()
 
@@ -65,6 +62,7 @@ def fig_qstar_distribution(
 # ROP VS GEO RISK
 # =========================================================
 
+
 def fig_rop_vs_geo_risk(
     df: pd.DataFrame,
 ):
@@ -78,33 +76,25 @@ def fig_rop_vs_geo_risk(
     missing = required - set(df.columns)
 
     if missing:
-        raise ValueError(
-            f"Missing columns: {missing}"
-        )
+        raise ValueError(f"Missing columns: {missing}")
 
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter(
-
             x=df["geo_risk_score"],
-
             y=df["bellman_rop"],
-
             mode="markers",
-
             marker=dict(
                 size=10,
                 color=df["ci_score"],
                 colorscale="Viridis",
                 showscale=True,
             ),
-
             text=df.get(
                 "item_id",
                 None,
             ),
-
             name="SKU",
         )
     )
@@ -124,6 +114,7 @@ def fig_rop_vs_geo_risk(
 # FUTURE COST SURFACE
 # =========================================================
 
+
 def fig_future_cost_surface(
     df: pd.DataFrame,
 ):
@@ -137,28 +128,19 @@ def fig_future_cost_surface(
     missing = required - set(df.columns)
 
     if missing:
-        raise ValueError(
-            f"Missing columns: {missing}"
-        )
+        raise ValueError(f"Missing columns: {missing}")
 
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter3d(
-
             x=df["geo_risk_score"],
-
             y=df["ci_score"],
-
             z=df["expected_future_cost"],
-
             mode="markers",
-
             marker=dict(
                 size=4,
-                color=df[
-                    "expected_future_cost"
-                ],
+                color=df["expected_future_cost"],
                 colorscale="Inferno",
             ),
         )

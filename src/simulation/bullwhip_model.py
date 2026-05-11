@@ -51,10 +51,7 @@ class EchelonData:
         if self.demand_variance <= 0:
             return 1.0
 
-        return (
-            self.order_variance
-            / self.demand_variance
-        )
+        return self.order_variance / self.demand_variance
 
 
 @dataclass
@@ -104,9 +101,7 @@ class BullwhipSummary:
 
     low_tier_bwr: float
 
-    sku_results: list[BullwhipResult] = field(
-        default_factory=list
-    )
+    sku_results: list[BullwhipResult] = field(default_factory=list)
 
 
 class BullwhipModel:
@@ -131,22 +126,15 @@ class BullwhipModel:
 
         self.n_echelons = n_echelons
 
-        self.lead_times = (
-            lead_times
-            or [1,2,3,4]
-        )
+        self.lead_times = lead_times or [1, 2, 3, 4]
 
-        self.smoothing_alpha = (
-            smoothing_alpha
-        )
+        self.smoothing_alpha = smoothing_alpha
 
         self.seed = seed
 
         if len(self.lead_times) != self.n_echelons:
 
-            raise ValueError(
-                "lead_times length must equal n_echelons"
-            )
+            raise ValueError("lead_times length must equal n_echelons")
 
     # =====================================================
     # DEMAND GENERATION
@@ -187,23 +175,14 @@ class BullwhipModel:
             return 1.0
 
         if policy_type == "standard":
-            return (
-                1.25
-                + echelon * 0.45
-            )
+            return 1.25 + echelon * 0.45
 
         if policy_type == "dp_optimized":
-            return (
-                1.05
-                + echelon * 0.20
-            )
+            return 1.05 + echelon * 0.20
 
         # CODP optimized
 
-        return (
-            1.02
-            + echelon * 0.12
-        )
+        return 1.02 + echelon * 0.12
 
     # =====================================================
     # SINGLE SKU
@@ -213,16 +192,12 @@ class BullwhipModel:
         self,
         row: dict,
         policy_type: str = "dp_optimized",
-        rng: Optional[
-            np.random.Generator
-        ] = None,
+        rng: Optional[np.random.Generator] = None,
     ) -> BullwhipResult:
 
         if rng is None:
 
-            rng = np.random.default_rng(
-                self.seed
-            )
+            rng = np.random.default_rng(self.seed)
 
         mean_demand = float(
             row.get(
@@ -252,37 +227,26 @@ class BullwhipModel:
             )
         )
 
-        end_demand = (
-            self._generate_end_demand(
-                mean_demand,
-                std_demand,
-                rng,
-            )
+        end_demand = self._generate_end_demand(
+            mean_demand,
+            std_demand,
+            rng,
         )
 
         echelons = []
 
         amplification_ratios = []
 
-        prev_orders = (
-            end_demand.copy()
-        )
+        prev_orders = end_demand.copy()
 
-        for echelon in range(
-            self.n_echelons
-        ):
+        for echelon in range(self.n_echelons):
 
-            multiplier = (
-                self._policy_multiplier(
-                    policy_type,
-                    echelon,
-                )
+            multiplier = self._policy_multiplier(
+                policy_type,
+                echelon,
             )
 
-            orders = (
-                prev_orders
-                * multiplier
-            )
+            orders = prev_orders * multiplier
 
             orders += rng.normal(
                 0,
@@ -297,72 +261,38 @@ class BullwhipModel:
 
             if echelon == 0:
 
-                orders = (
-                    end_demand.copy()
-                )
+                orders = end_demand.copy()
 
-            echelon_data = (
-                EchelonData(
-                    echelon_id=echelon,
-
-                    echelon_name=
-                        self.ECHELON_NAMES[
-                            echelon
-                        ],
-
-                    demands=
-                        prev_orders.copy(),
-
-                    orders=
-                        orders.copy(),
-                )
+            echelon_data = EchelonData(
+                echelon_id=echelon,
+                echelon_name=self.ECHELON_NAMES[echelon],
+                demands=prev_orders.copy(),
+                orders=orders.copy(),
             )
 
-            echelons.append(
-                echelon_data
-            )
+            echelons.append(echelon_data)
 
-            amplification_ratios.append(
-                echelon_data
-                .bullwhip_ratio
-            )
+            amplification_ratios.append(echelon_data.bullwhip_ratio)
 
-            prev_orders = (
-                orders.copy()
-            )
+            prev_orders = orders.copy()
 
-        total_amp = (
-            amplification_ratios[-1]
-        )
+        total_amp = amplification_ratios[-1]
 
         return BullwhipResult(
-
             item_id=str(
                 row.get(
                     "item_id",
                     "UNKNOWN",
                 )
             ),
-
             ci_tier=ci_tier,
-
             fns_class=fns_class,
-
             echelons=echelons,
-
-            amplification_ratios=
-                amplification_ratios,
-
-            total_amplification=
-                total_amp,
-
+            amplification_ratios=amplification_ratios,
+            total_amplification=total_amp,
             policy_type=policy_type,
-
-            lead_times=
-                self.lead_times,
-
-            n_periods=
-                self.n_periods,
+            lead_times=self.lead_times,
+            n_periods=self.n_periods,
         )
 
     # =====================================================
@@ -375,9 +305,7 @@ class BullwhipModel:
         policy_type: str = "dp_optimized",
     ) -> BullwhipSummary:
 
-        rng = np.random.default_rng(
-            self.seed
-        )
+        rng = np.random.default_rng(self.seed)
 
         results = []
 
@@ -391,86 +319,35 @@ class BullwhipModel:
                 )
             )
 
-        total_amps = [
-            r.total_amplification
-            for r in results
-        ]
+        total_amps = [r.total_amplification for r in results]
 
-        def tier_mean(
-            tier: str
-        ) -> float:
+        def tier_mean(tier: str) -> float:
 
-            vals = [
-
-                r.total_amplification
-
-                for r in results
-
-                if r.ci_tier == tier
-            ]
+            vals = [r.total_amplification for r in results if r.ci_tier == tier]
 
             if not vals:
                 return 1.0
 
-            return float(
-                np.mean(vals)
-            )
+            return float(np.mean(vals))
 
         return BullwhipSummary(
-
             n_skus=len(results),
-
             policy_type=policy_type,
-
             mean_bwr_echelon_1=float(
-                np.mean([
-                    r.amplification_ratios[1]
-                    for r in results
-                ])
+                np.mean([r.amplification_ratios[1] for r in results])
             ),
-
             mean_bwr_echelon_2=float(
-                np.mean([
-                    r.amplification_ratios[2]
-                    for r in results
-                ])
+                np.mean([r.amplification_ratios[2] for r in results])
             ),
-
             mean_bwr_echelon_3=float(
-                np.mean([
-                    r.amplification_ratios[3]
-                    for r in results
-                ])
+                np.mean([r.amplification_ratios[3] for r in results])
             ),
-
-            mean_total_amplification=float(
-                np.mean(
-                    total_amps
-                )
-            ),
-
-            std_total_amplification=float(
-                np.std(
-                    total_amps
-                )
-            ),
-
-            pct_bwr_gt_1=float(
-                np.mean([
-                    a > 1.0
-                    for a in total_amps
-                ])
-            ),
-
-            high_tier_bwr=
-                tier_mean("High"),
-
-            medium_tier_bwr=
-                tier_mean("Medium"),
-
-            low_tier_bwr=
-                tier_mean("Low"),
-
+            mean_total_amplification=float(np.mean(total_amps)),
+            std_total_amplification=float(np.std(total_amps)),
+            pct_bwr_gt_1=float(np.mean([a > 1.0 for a in total_amps])),
+            high_tier_bwr=tier_mean("High"),
+            medium_tier_bwr=tier_mean("Medium"),
+            low_tier_bwr=tier_mean("Low"),
             sku_results=results,
         )
 
@@ -486,30 +363,22 @@ class BullwhipModel:
         rows = []
 
         for policy in [
-
             "standard",
-
             "dp_optimized",
-
             "codp",
         ]:
 
-            summary = (
-                self.analyze_all(
-                    df,
-                    policy,
-                )
+            summary = self.analyze_all(
+                df,
+                policy,
             )
 
-            rows.append({
-
-                "policy":
-                    policy,
-
-                "mean_total_amp":
-                    summary
-                    .mean_total_amplification,
-            })
+            rows.append(
+                {
+                    "policy": policy,
+                    "mean_total_amp": summary.mean_total_amplification,
+                }
+            )
 
         return pd.DataFrame(rows)
 
@@ -527,32 +396,17 @@ class BullwhipModel:
         for r in summary.sku_results:
 
             row = {
-
-                "item_id":
-                    r.item_id,
-
-                "ci_tier":
-                    r.ci_tier,
-
-                "fns_class":
-                    r.fns_class,
-
-                "policy_type":
-                    r.policy_type,
-
-                "total_amplification":
-                    r.total_amplification,
+                "item_id": r.item_id,
+                "ci_tier": r.ci_tier,
+                "fns_class": r.fns_class,
+                "policy_type": r.policy_type,
+                "total_amplification": r.total_amplification,
             }
 
-            for i, bwr in enumerate(
-                r.amplification_ratios
-            ):
+            for i, bwr in enumerate(r.amplification_ratios):
 
-                row[
-                    f"bwr_e{i}"
-                ] = bwr
+                row[f"bwr_e{i}"] = bwr
 
             rows.append(row)
 
         return pd.DataFrame(rows)
-

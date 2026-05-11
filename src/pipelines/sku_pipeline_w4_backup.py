@@ -37,57 +37,37 @@ from src.data_ingestion.synthetic_sku_master import (
     generate_sku_master,
 )
 
-
 logging.basicConfig(
     level=logging.INFO,
-    format=(
-        "%(asctime)s | "
-        "%(levelname)s | "
-        "%(name)s | "
-        "%(message)s"
-    ),
+    format=("%(asctime)s | " "%(levelname)s | " "%(name)s | " "%(message)s"),
 )
 
 logger = logging.getLogger(__name__)
 
 
-OUTPUT_PATH = Path(
-    "data/processed/sku_master_v1.1.parquet"
-)
+OUTPUT_PATH = Path("data/processed/sku_master_v1.1.parquet")
 
-METRICS_PATH = Path(
-    "data/processed/pipeline_metrics.json"
-)
+METRICS_PATH = Path("data/processed/pipeline_metrics.json")
 
-FIGURES_DIR = Path(
-    "reports/figures"
-)
+FIGURES_DIR = Path("reports/figures")
 
 
 def run_pipeline(
     n_skus: int = 500,
 ) -> pd.DataFrame:
 
-    mlflow.set_tracking_uri(
-        "sqlite:///mlflow/mlflow.db"
-    )
+    mlflow.set_tracking_uri("sqlite:///mlflow/mlflow.db")
 
-    mlflow.set_experiment(
-        "geo-aware-mro"
-    )
+    mlflow.set_experiment("geo-aware-mro")
 
-    with mlflow.start_run(
-        run_name="v1.1_pipeline"
-    ):
+    with mlflow.start_run(run_name="v1.1_pipeline"):
 
         mlflow.log_param(
             "n_skus",
             n_skus,
         )
 
-        logger.info(
-            "Stage 1/9 — Generate SKU Master"
-        )
+        logger.info("Stage 1/9 — Generate SKU Master")
 
         df = generate_sku_master(
             n_skus=n_skus,
@@ -98,85 +78,55 @@ def run_pipeline(
             len(df),
         )
 
-        logger.info(
-            "Stage 2/9 — Dominance Check"
-        )
+        logger.info("Stage 2/9 — Dominance Check")
 
-        df["annual_consumption_value"] = (
-            df["demand"]
-            * df["unit_cost"]
-        )
+        df["annual_consumption_value"] = df["demand"] * df["unit_cost"]
 
         dominance = DominanceChecker()
 
-        df, dominance_result = (
-            dominance.check_and_remediate(
-                df,
-                acv_col="annual_consumption_value",
-            )
+        df, dominance_result = dominance.check_and_remediate(
+            df,
+            acv_col="annual_consumption_value",
         )
 
         mlflow.log_metric(
             "concentration_ratio",
-            dominance_result[
-                "concentration_ratio"
-            ],
+            dominance_result["concentration_ratio"],
         )
 
         mlflow.log_metric(
             "dominance_detected",
-            int(
-                dominance_result[
-                    "bias_detected"
-                ]
-            ),
+            int(dominance_result["bias_detected"]),
         )
 
-        logger.info(
-            "Stage 3/9 — ABC Classification"
-        )
+        logger.info("Stage 3/9 — ABC Classification")
 
         df = classify_abc(df)
 
         mlflow.log_metric(
             "a_ratio",
-            (
-                (df["abc_class"] == "A")
-                .mean()
-            ),
+            ((df["abc_class"] == "A").mean()),
         )
 
-        logger.info(
-            "Stage 4/9 — VED Classification"
-        )
+        logger.info("Stage 4/9 — VED Classification")
 
         df = classify_ved(df)
 
         mlflow.log_metric(
             "v_ratio",
-            (
-                (df["ved_class"] == "V")
-                .mean()
-            ),
+            ((df["ved_class"] == "V").mean()),
         )
 
-        logger.info(
-            "Stage 5/9 — FNS Classification"
-        )
+        logger.info("Stage 5/9 — FNS Classification")
 
         df = classify_fns(df)
 
         mlflow.log_metric(
             "fast_ratio",
-            (
-                (df["fns_class"] == "Smooth")
-                .mean()
-            ),
+            ((df["fns_class"] == "Smooth").mean()),
         )
 
-        logger.info(
-            "Stage 6/9 — Location Scoring"
-        )
+        logger.info("Stage 6/9 — Location Scoring")
 
         scorer = LocationScorer()
 
@@ -187,9 +137,7 @@ def run_pipeline(
             df["location_score"].mean(),
         )
 
-        logger.info(
-            "Stage 7/9 — Lead-Time Risk"
-        )
+        logger.info("Stage 7/9 — Lead-Time Risk")
 
         ltr = LTRScorer()
 
@@ -200,9 +148,7 @@ def run_pipeline(
             df["ltr_score"].mean(),
         )
 
-        logger.info(
-            "Stage 8/9 — Criticality Index"
-        )
+        logger.info("Stage 8/9 — Criticality Index")
 
         ci = CriticalityIndexer()
 
@@ -213,9 +159,7 @@ def run_pipeline(
             df["ci_score"].mean(),
         )
 
-        logger.info(
-            "Stage 9/9 — Newsvendor"
-        )
+        logger.info("Stage 9/9 — Newsvendor")
 
         engine = NewsvendorEngine()
 
@@ -253,18 +197,10 @@ def run_pipeline(
 
         metrics = {
             "rows": len(df),
-            "mean_ci_score": float(
-                df["ci_score"].mean()
-            ),
-            "mean_tsl": float(
-                df["tsl"].mean()
-            ),
-            "mean_qstar": float(
-                df["q_star"].mean()
-            ),
-            "mean_rop": float(
-                df["rop"].mean()
-            ),
+            "mean_ci_score": float(df["ci_score"].mean()),
+            "mean_tsl": float(df["tsl"].mean()),
+            "mean_qstar": float(df["q_star"].mean()),
+            "mean_rop": float(df["rop"].mean()),
         }
 
         with open(
@@ -284,14 +220,9 @@ def run_pipeline(
             bins=20,
         )
 
-        plt.title(
-            "Criticality Index Distribution"
-        )
+        plt.title("Criticality Index Distribution")
 
-        ci_hist_path = (
-            FIGURES_DIR
-            / "ci_histogram.png"
-        )
+        ci_hist_path = FIGURES_DIR / "ci_histogram.png"
 
         plt.savefig(
             ci_hist_path,
@@ -309,14 +240,9 @@ def run_pipeline(
             hue="abc_class",
         )
 
-        plt.title(
-            "LTR vs Criticality"
-        )
+        plt.title("LTR vs Criticality")
 
-        scatter_path = (
-            FIGURES_DIR
-            / "ltr_vs_ci.png"
-        )
+        scatter_path = FIGURES_DIR / "ltr_vs_ci.png"
 
         plt.savefig(
             scatter_path,
@@ -325,31 +251,21 @@ def run_pipeline(
 
         plt.close()
 
-        pareto_df = (
-            df.sort_values(
-                by="annual_consumption_value",
-                ascending=False,
-            )
-            .reset_index(drop=True)
-        )
+        pareto_df = df.sort_values(
+            by="annual_consumption_value",
+            ascending=False,
+        ).reset_index(drop=True)
 
         pareto_df["cum_pct"] = (
-            pareto_df[
-                "annual_consumption_value"
-            ].cumsum()
-            /
-            pareto_df[
-                "annual_consumption_value"
-            ].sum()
+            pareto_df["annual_consumption_value"].cumsum()
+            / pareto_df["annual_consumption_value"].sum()
         ) * 100
 
         plt.figure(figsize=(10, 5))
 
         plt.bar(
             pareto_df.index,
-            pareto_df[
-                "annual_consumption_value"
-            ],
+            pareto_df["annual_consumption_value"],
         )
 
         plt.plot(
@@ -357,14 +273,9 @@ def run_pipeline(
             pareto_df["cum_pct"],
         )
 
-        plt.title(
-            "Pareto Concentration"
-        )
+        plt.title("Pareto Concentration")
 
-        pareto_path = (
-            FIGURES_DIR
-            / "pareto_chart.png"
-        )
+        pareto_path = FIGURES_DIR / "pareto_chart.png"
 
         plt.savefig(
             pareto_path,
@@ -375,25 +286,15 @@ def run_pipeline(
 
         mlflow.log_metrics(metrics)
 
-        mlflow.log_artifact(
-            str(METRICS_PATH)
-        )
+        mlflow.log_artifact(str(METRICS_PATH))
 
-        mlflow.log_artifact(
-            str(OUTPUT_PATH)
-        )
+        mlflow.log_artifact(str(OUTPUT_PATH))
 
-        mlflow.log_artifact(
-            str(ci_hist_path)
-        )
+        mlflow.log_artifact(str(ci_hist_path))
 
-        mlflow.log_artifact(
-            str(scatter_path)
-        )
+        mlflow.log_artifact(str(scatter_path))
 
-        mlflow.log_artifact(
-            str(pareto_path)
-        )
+        mlflow.log_artifact(str(pareto_path))
 
         logger.info(
             "Pipeline complete | output=%s",

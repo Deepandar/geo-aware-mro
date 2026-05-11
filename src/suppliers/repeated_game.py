@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # DATA STRUCTURES
 # =========================================================
 
+
 @dataclass
 class SupplierHistory:
 
@@ -31,13 +32,9 @@ class SupplierHistory:
 
     supplier_risk_class: str = "Medium"
 
-    deliveries: list[float] = field(
-        default_factory=list
-    )
+    deliveries: list[float] = field(default_factory=list)
 
-    defections: list[bool] = field(
-        default_factory=list
-    )
+    defections: list[bool] = field(default_factory=list)
 
     def simulate(
         self,
@@ -54,14 +51,10 @@ class SupplierHistory:
                 rng.normal(
                     loc=3.0,
                     scale=4.0,
-                )
+                ),
             )
 
-            defected = (
-                rng.random()
-                <
-                self.defection_prob
-            )
+            defected = rng.random() < self.defection_prob
 
             if defected:
 
@@ -70,13 +63,9 @@ class SupplierHistory:
                     15.0,
                 )
 
-            self.deliveries.append(
-                late_days
-            )
+            self.deliveries.append(late_days)
 
-            self.defections.append(
-                defected
-            )
+            self.defections.append(defected)
 
 
 @dataclass
@@ -107,6 +96,7 @@ class ReputationResult:
 # REPEATED GAME MODEL
 # =========================================================
 
+
 class RepeatedGameModel:
 
     def __init__(
@@ -123,44 +113,24 @@ class RepeatedGameModel:
 
         self.T = T
 
-        self.discount_factor = (
-            discount_factor
-        )
+        self.discount_factor = discount_factor
 
-        self.late_threshold_days = (
-            late_threshold_days
-        )
+        self.late_threshold_days = late_threshold_days
 
-        self.cooperation_surplus = (
-            cooperation_surplus
-        )
+        self.cooperation_surplus = cooperation_surplus
 
-        self.defection_gain = (
-            defection_gain
-        )
+        self.defection_gain = defection_gain
 
-        self.grim_trigger_threshold = (
-            grim_trigger_threshold
-        )
+        self.grim_trigger_threshold = grim_trigger_threshold
 
-        self.reputation_decay = (
-            reputation_decay
-        )
+        self.reputation_decay = reputation_decay
 
         self.seed = seed
 
-        self.rng = np.random.default_rng(
-            seed
-        )
+        self.rng = np.random.default_rng(seed)
 
-        self.delta_required = (
-            self.defection_gain
-            /
-            (
-                self.defection_gain
-                +
-                self.cooperation_surplus
-            )
+        self.delta_required = self.defection_gain / (
+            self.defection_gain + self.cooperation_surplus
         )
 
     # =====================================================
@@ -172,12 +142,7 @@ class RepeatedGameModel:
         row: pd.Series,
     ) -> SupplierHistory:
 
-        risk_class = str(
-            row.get(
-                "supplier_risk_class",
-                "Medium"
-            )
-        )
+        risk_class = str(row.get("supplier_risk_class", "Medium"))
 
         risk_map = {
             "Low": 0.05,
@@ -192,24 +157,12 @@ class RepeatedGameModel:
         )
 
         return SupplierHistory(
-            item_id=str(
-                row.get(
-                    "item_id",
-                    "UNKNOWN"
-                )
-            ),
+            item_id=str(row.get("item_id", "UNKNOWN")),
             periods=self.T,
-            on_time_rate=float(
-                1.0 - defect_prob
-            ),
+            on_time_rate=float(1.0 - defect_prob),
             defection_prob=defect_prob,
             late_threshold_days=self.late_threshold_days,
-            geo_risk_score=float(
-                row.get(
-                    "geo_risk_score",
-                    0.0
-                )
-            ),
+            geo_risk_score=float(row.get("geo_risk_score", 0.0)),
             supplier_risk_class=risk_class,
         )
 
@@ -234,41 +187,19 @@ class RepeatedGameModel:
 
                 n_defections += 1
 
-                rep = (
-                    self.reputation_decay
-                    *
-                    rep
+                rep = self.reputation_decay * rep
+
+                adaptive_threshold = self.grim_trigger_threshold + int(
+                    history.geo_risk_score * 3
                 )
 
-                adaptive_threshold = (
-                    self.grim_trigger_threshold
-                    +
-                    int(
-                        history.geo_risk_score
-                        * 3
-                    )
-                )
-
-                if (
-                    n_defections >=
-                    adaptive_threshold
-                ):
+                if n_defections >= adaptive_threshold:
 
                     trigger = True
 
             else:
 
-                rep = (
-                    self.reputation_decay
-                    *
-                    rep
-                    +
-                    (
-                        1
-                        -
-                        self.reputation_decay
-                    )
-                )
+                rep = self.reputation_decay * rep + (1 - self.reputation_decay)
 
         # -------------------------------------------------
         # CONTEXT-AWARE TRIGGER PENALTY
@@ -276,61 +207,35 @@ class RepeatedGameModel:
 
         if trigger:
 
-            punishment_floor = (
-                0.30
-                +
-                (
-                    0.15
-                    *
-                    history.geo_risk_score
-                )
-            )
+            punishment_floor = 0.30 + (0.15 * history.geo_risk_score)
 
-            rep = min(
-                rep,
-                punishment_floor
-            )
+            rep = min(rep, punishment_floor)
 
-        rep = float(
-            np.clip(rep, 0.0, 1.0)
-        )
+        rep = float(np.clip(rep, 0.0, 1.0))
 
-        delta_ok = (
-            self.discount_factor
-            >
-            self.delta_required
-        )
+        delta_ok = self.discount_factor > self.delta_required
 
         # -------------------------------------------------
         # ENTERPRISE ESCALATION LADDER
         # -------------------------------------------------
 
-        supplier_risk = (
-            history.supplier_risk_class
-        )
+        supplier_risk = history.supplier_risk_class
 
-        if (
-            trigger
-            and
-            (
-                rep <= 0.10
-                or
-                (
-                    rep <= 0.25
-                    and supplier_risk in (
-                        "High",
-                        "Critical",
-                    )
+        if trigger and (
+            rep <= 0.10
+            or (
+                rep <= 0.25
+                and supplier_risk
+                in (
+                    "High",
+                    "Critical",
                 )
             )
         ):
 
             action = "Mandatory Switch"
 
-        elif (
-            supplier_risk == "Critical"
-            or rep <= 0.40
-        ):
+        elif supplier_risk == "Critical" or rep <= 0.40:
 
             action = "Renegotiate"
 
@@ -347,34 +252,18 @@ class RepeatedGameModel:
             action = "Continue"
 
         return ReputationResult(
-
             item_id=history.item_id,
-
             reputation_score=round(
                 rep,
                 4,
             ),
-
             grim_trigger_fired=trigger,
-
             n_defections=n_defections,
-
-            n_periods=len(
-                history.defections
-            ),
-
+            n_periods=len(history.defections),
             delta_satisfied=delta_ok,
-
             delta_value=self.delta_required,
-
-            cooperation_surplus=(
-                self.cooperation_surplus
-            ),
-
-            defection_gain=(
-                self.defection_gain
-            ),
-
+            cooperation_surplus=(self.cooperation_surplus),
+            defection_gain=(self.defection_gain),
             recommended_action=action,
         )
 
@@ -393,57 +282,31 @@ class RepeatedGameModel:
 
         if "item_id" not in df.columns:
 
-            raise ValueError(
-                "item_id column is required"
-            )
+            raise ValueError("item_id column is required")
 
         results = []
 
         for _, row in df.iterrows():
 
-            history = self._build_history(
-                row
+            history = self._build_history(row)
+
+            history.simulate(self.rng)
+
+            result = self._compute_reputation(history)
+
+            results.append(
+                {
+                    "item_id": result.item_id,
+                    "reputation_score": result.reputation_score,
+                    "grim_trigger_fired": result.grim_trigger_fired,
+                    "n_defections": result.n_defections,
+                    "delta_satisfied": result.delta_satisfied,
+                    "recommended_action": result.recommended_action,
+                    "supplier_risk_class": row.get("supplier_risk_class", "Medium"),
+                }
             )
 
-            history.simulate(
-                self.rng
-            )
-
-            result = (
-                self._compute_reputation(
-                    history
-                )
-            )
-
-            results.append({
-                "item_id":
-                    result.item_id,
-
-                "reputation_score":
-                    result.reputation_score,
-
-                "grim_trigger_fired":
-                    result.grim_trigger_fired,
-
-                "n_defections":
-                    result.n_defections,
-
-                "delta_satisfied":
-                    result.delta_satisfied,
-
-                "recommended_action":
-                    result.recommended_action,
-
-                "supplier_risk_class":
-                    row.get(
-                        "supplier_risk_class",
-                        "Medium"
-                    ),
-            })
-
-        out = pd.DataFrame(
-            results
-        )
+        out = pd.DataFrame(results)
 
         return out, out.copy()
 
@@ -452,16 +315,7 @@ class RepeatedGameModel:
     ):
 
         return {
-            "discount_factor":
-                self.discount_factor,
-
-            "delta_required":
-                self.delta_required,
-
-            "folk_theorem_satisfied":
-                (
-                    self.discount_factor
-                    >
-                    self.delta_required
-                ),
+            "discount_factor": self.discount_factor,
+            "delta_required": self.delta_required,
+            "folk_theorem_satisfied": (self.discount_factor > self.delta_required),
         }

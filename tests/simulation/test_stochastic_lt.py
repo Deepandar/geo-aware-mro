@@ -3,14 +3,8 @@ import numpy as np
 import pandas as pd
 
 from src.simulation.lead_time_fitter import (
-
     StochasticLeadTimeFitter,
-
     CLUSTER_GAMMA_PARAMS,
-
-    COUNTRY_CLUSTERS,
-
-    SCENARIO_LT_MULTIPLIERS,
 )
 
 
@@ -26,9 +20,7 @@ def fitter():
 @pytest.fixture
 def rng():
 
-    return np.random.default_rng(
-        42
-    )
+    return np.random.default_rng(42)
 
 
 def test_sample_lead_time_positive(
@@ -78,27 +70,16 @@ def test_high_risk_country_longer_lt_than_low_risk(
         rng,
     )
 
-    assert (
-        ru_lts.mean()
-        > in_lts.mean()
-    )
+    assert ru_lts.mean() > in_lts.mean()
 
 
 def test_sanctions_scenario_increases_high_risk_lt(
     rng,
 ):
 
-    base_fitter = (
-        StochasticLeadTimeFitter(
-            scenario="baseline"
-        )
-    )
+    base_fitter = StochasticLeadTimeFitter(scenario="baseline")
 
-    sanc_fitter = (
-        StochasticLeadTimeFitter(
-            scenario="sanctions"
-        )
-    )
+    sanc_fitter = StochasticLeadTimeFitter(scenario="sanctions")
 
     n = 300
 
@@ -118,10 +99,7 @@ def test_sanctions_scenario_increases_high_risk_lt(
         rng,
     )
 
-    assert (
-        sanc_lts.mean()
-        > base_lts.mean()
-    )
+    assert sanc_lts.mean() > base_lts.mean()
 
 
 def test_geo_risk_penalty_increases_lt(
@@ -129,29 +107,29 @@ def test_geo_risk_penalty_increases_lt(
     rng,
 ):
 
-    low_geo = np.mean([
+    low_geo = np.mean(
+        [
+            fitter.sample_lead_time(
+                "CN",
+                0.1,
+                45,
+                rng,
+            )
+            for _ in range(300)
+        ]
+    )
 
-        fitter.sample_lead_time(
-            "CN",
-            0.1,
-            45,
-            rng,
-        )
-
-        for _ in range(300)
-    ])
-
-    high_geo = np.mean([
-
-        fitter.sample_lead_time(
-            "CN",
-            0.9,
-            45,
-            rng,
-        )
-
-        for _ in range(300)
-    ])
+    high_geo = np.mean(
+        [
+            fitter.sample_lead_time(
+                "CN",
+                0.9,
+                45,
+                rng,
+            )
+            for _ in range(300)
+        ]
+    )
 
     assert high_geo > low_geo
 
@@ -177,65 +155,51 @@ def test_distribution_summary_has_all_clusters(
 
     df = fitter.distribution_summary()
 
-    clusters = set(
-        df["cluster"].tolist()
-    )
+    clusters = set(df["cluster"].tolist())
 
-    expected = set(
-        CLUSTER_GAMMA_PARAMS.keys()
-    )
+    expected = set(CLUSTER_GAMMA_PARAMS.keys())
 
-    assert expected.issubset(
-        clusters
-    )
+    assert expected.issubset(clusters)
 
 
 def test_generate_overrides_returns_dicts(
     fitter,
 ):
 
-    df = pd.DataFrame({
-
-        "item_id": [
-            "A",
-            "B",
-            "C",
-        ],
-
-        "supply_origin_country": [
-            "IN",
-            "RU",
-            "CN",
-        ],
-
-        "geo_risk_score": [
-            0.1,
-            0.8,
-            0.5,
-        ],
-
-        "mean_lead_time": [
-            14,
-            90,
-            45,
-        ],
-    })
-
-    mu_ov, sig_ov = (
-        fitter.generate_overrides(df)
+    df = pd.DataFrame(
+        {
+            "item_id": [
+                "A",
+                "B",
+                "C",
+            ],
+            "supply_origin_country": [
+                "IN",
+                "RU",
+                "CN",
+            ],
+            "geo_risk_score": [
+                0.1,
+                0.8,
+                0.5,
+            ],
+            "mean_lead_time": [
+                14,
+                90,
+                45,
+            ],
+        }
     )
 
-    assert set(
-        mu_ov.keys()
-    ) == {
+    mu_ov, sig_ov = fitter.generate_overrides(df)
+
+    assert set(mu_ov.keys()) == {
         "A",
         "B",
         "C",
     }
 
-    assert set(
-        sig_ov.keys()
-    ) == {
+    assert set(sig_ov.keys()) == {
         "A",
         "B",
         "C",
@@ -257,10 +221,4 @@ def test_mle_fit_updates_distribution(
         country="IN",
     )
 
-    assert (
-        abs(
-            fitted.mean_lt - 60.0
-        ) / 60.0
-        < 0.40
-    )
-
+    assert abs(fitted.mean_lt - 60.0) / 60.0 < 0.40
