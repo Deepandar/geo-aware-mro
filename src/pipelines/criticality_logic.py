@@ -1,5 +1,3 @@
-import pandas as pd
-import numpy as np
 
 def calculate_criticality(df):
     # Weights and maps from Week 3 NB 

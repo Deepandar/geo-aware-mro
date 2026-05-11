@@ -4,7 +4,6 @@ import pandas as pd
 
 from src.suppliers.decision_tree_qualifier import (
     DecisionTreeQualifier,
-    RISK_CLASSES,
 )
 
 

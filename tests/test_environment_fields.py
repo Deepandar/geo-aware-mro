@@ -1,5 +1,4 @@
 import pandas as pd
-from pathlib import Path
 
 from week3_day4_final_scorer import compute_composite_index
 

@@ -1,6 +1,5 @@
 # tests/optimization/test_bellman_engine.py
 
-import pandas as pd
 
 from src.optimization.bellman_engine import (
     BellmanEngine,

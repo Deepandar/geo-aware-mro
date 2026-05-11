@@ -1,11 +1,9 @@
-import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 from src.rl.mro_env import MROInventoryEnv, GYM_AVAILABLE
 
 try:
-    from stable_baselines3 import PPO
     SB3_AVAILABLE = True
 except ImportError:
     SB3_AVAILABLE = False
@@ -29,7 +27,15 @@ class PPOReorderAgent:
         self.model = None
 
     def evaluate(self, n_episodes=50):
-        if not GYM_AVAILABLE: return RLEvalResult("PPO Agent", 0, 0.9, 0.8, 0.95)
+        if not GYM_AVAILABLE:
+
+            return RLEvalResult(
+                "PPO Agent",
+                0,
+                0.9,
+                0.8,
+                0.95,
+            )
         env = MROInventoryEnv(**self.env_params)
         rates = []
         for i in range(n_episodes):
@@ -43,7 +49,15 @@ class PPOReorderAgent:
         return RLEvalResult("PPO Agent", n_episodes, np.mean(rates), np.percentile(rates, 5), np.percentile(rates, 95))
 
     def evaluate_newsvendor_baseline(self, n_episodes=50, newsvendor_q_star=None):
-        if not GYM_AVAILABLE: return RLEvalResult("Newsvendor", 0, 0.85, 0.75, 0.9)
+        if not GYM_AVAILABLE:
+
+            return RLEvalResult(
+                "Newsvendor",
+                0,
+                0.85,
+                0.75,
+                0.9,
+            )
         env = MROInventoryEnv(**self.env_params)
         q_star = newsvendor_q_star or (self.env_params.get("mean_demand", 10.0) * 1.2)
         action = np.array([q_star / self.env_params.get("q_max", 50.0)], dtype=np.float32)

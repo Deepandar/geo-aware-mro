@@ -188,7 +188,7 @@ def write_artifacts() -> None:
     print("- src/schema/sku_master_schema.json")
     print("- data/processed/sku_master_schema.json")
     print("- docs/schema_sku_master.html")
-    print(f"- MLflow run: W2D2_sku_master_schema")
+    print("- MLflow run: W2D2_sku_master_schema")
     print("Commit commands:")
     print("git add src/schema/__init__.py src/schema/sku_master.py src/schema/sku_master_schema.json src/schema/sku_master_ddl.sql docs/schema_sku_master.html data/processed/sku_master_schema.json")
     print('git commit -m "feat: W2D2 -- SKU Master schema, 28 fields, Pydantic v2, DuckDB DDL"')

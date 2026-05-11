@@ -1,5 +1,4 @@
 """Tests for ABC classifier"""
-import pytest
 import pandas as pd
 from src.classifiers.abc_classifier import compute_abc
 

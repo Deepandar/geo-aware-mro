@@ -7,10 +7,6 @@ from src.simulation.lead_time_fitter import (
     StochasticLeadTimeFitter,
 
     CLUSTER_GAMMA_PARAMS,
-
-    COUNTRY_CLUSTERS,
-
-    SCENARIO_LT_MULTIPLIERS,
 )
 
 

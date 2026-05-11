@@ -5,23 +5,65 @@ import duckdb
 
 class GeoAwareMROEnv(gym.Env):
     # Updated path to the new DB location
-    def __init__(self, sku_df=None, seed=None, fast_mode=False, **kwargs):
+    def __init__(
+        self,
+        sku_df=None,
+        seed=None,
+        fast_mode=False,
+        db_path="data/mro.duckdb",
+        **kwargs
+    ):
         self.fast_mode = fast_mode
         self.seed = seed
         super(GeoAwareMROEnv, self).__init__()
-        self.db = duckdb.connect(db_path)
+        try:
+            self.db = duckdb.connect(db_path)
+        except Exception:
+            self.db = None
         
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(low=0, high=1, shape=(4,), dtype=np.float32)
         
         try:
-            # Querying the Comtrade snapshots for trade volatility
-            self.trade_series = self.db.execute(
-                "SELECT trade_value_usd FROM comtrade_data ORDER BY period LIMIT 1000"
-            ).df()['trade_value_usd'].values
-            self.trade_series = (self.trade_series - self.trade_series.min()) / (self.trade_series.max() - self.trade_series.min())
+
+            if self.db is not None:
+
+                self.trade_series = (
+                    self.db.execute(
+                        '''
+                        SELECT trade_value_usd
+                        FROM comtrade_data
+                        ORDER BY period
+                        LIMIT 1000
+                        '''
+                    )
+                    .df()["trade_value_usd"]
+                    .values
+                )
+
+                self.trade_series = (
+                    (
+                        self.trade_series
+                        - self.trade_series.min()
+                    )
+                    /
+                    (
+                        self.trade_series.max()
+                        - self.trade_series.min()
+                    )
+                )
+
+            else:
+
+                raise RuntimeError("DuckDB unavailable")
+
         except Exception:
-            self.trade_series = np.random.uniform(0.1, 1.0, 1000)
+
+            self.trade_series = np.random.uniform(
+                0.1,
+                1.0,
+                1000,
+            )
 
         self.state = None
         self.steps = 0

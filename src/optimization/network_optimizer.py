@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict
 
 import mlflow
