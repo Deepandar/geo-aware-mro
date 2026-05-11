@@ -10,7 +10,7 @@ A production-grade decision intelligence platform for Maintenance, Repair, and O
 
 The Geo-Aware MRO Decision Intelligence System is designed to solve complex inventory and operational challenges in asset-intensive environments where uncertainty, intermittent demand, long lead times, and geopolitical disruptions significantly impact mission readiness and operational continuity.
 
-The platform combines:
+The platform encompasses:
 
 - Multi-dimensional inventory intelligence
 - Bayesian geopolitical risk modeling
