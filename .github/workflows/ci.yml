@@ -38,8 +38,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+          pip install -r requirements-ci.txt
 
       - name: Run Tests
         run: |
