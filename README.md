@@ -1,6 +1,9 @@
+cat > README.md << 'EOF'
 # Geo-Aware MRO Decision Intelligence System
 
 ## Multi-Echelon Optimization · Geopolitical Risk Intelligence · AI-Driven Supply Chain Resilience
+
+### Enterprise Supply Chain Resilience Platform for Asset-Intensive Operations
 
 A production-grade decision intelligence platform for Maintenance, Repair, and Overhaul (MRO) ecosystems integrating Operations Research, Artificial Intelligence, Simulation Engineering, and Cloud-Native MLOps.
 
@@ -18,7 +21,6 @@ The platform encompasses:
 - Simulation-based resilience analysis
 - Cooperative and non-cooperative game theory
 - Reinforcement learning
-- Retrieval-Augmented Generation (RAG)
 - Enterprise-grade MLOps infrastructure
 
 The architecture evolves progressively across three independently deployable versions, each extending the system from deterministic inventory intelligence toward adaptive AI-driven strategic decision systems.
@@ -294,7 +296,7 @@ Transform the inventory intelligence platform into a dynamic resilience-oriented
 
 ## Objective
 
-Transform the resilience platform into a production-grade AI-enabled strategic decision ecosystem integrating optimization, reinforcement learning, conversational intelligence, and enterprise deployment.
+Transform the resilience platform into a production-grade AI-enabled strategic decision ecosystem integrating optimization, reinforcement learning, and enterprise deployment.
 
 ---
 
@@ -343,22 +345,7 @@ Transform the resilience platform into a production-grade AI-enabled strategic d
 
 ---
 
-## Stage 4 — LLM Advisory Layer
-
-### Core Components
-- LangChain RAG pipelines
-- ChromaDB vector indexing
-- Conversational operational intelligence
-- Knowledge-grounded advisory
-
-### Deliverables
-- AI advisory layer
-- Retrieval-Augmented intelligence system
-- What-if analysis framework
-
----
-
-## Stage 5 — Reinforcement Learning Optimization
+## Stage 4 — Reinforcement Learning Optimization
 
 ### Core Components
 - MDP environment design
@@ -373,7 +360,7 @@ Transform the resilience platform into a production-grade AI-enabled strategic d
 
 ---
 
-## Stage 6 — Enterprise Deployment and Research Publication
+## Stage 5 — Enterprise Deployment and Research Publication
 
 ### Core Components
 - Docker Compose deployment
@@ -406,21 +393,30 @@ Transform the resilience platform into a production-grade AI-enabled strategic d
 
 # Mathematical Framework
 
-## Criticality Index
+The platform integrates multiple mathematical and computational paradigms:
 
-:contentReference[oaicite:0]{index=0}
+- Bayesian probabilistic inference
+- Bellman dynamic programming
+- Mixed-Integer Linear Programming (MILP)
+- Monte Carlo simulation
+- Cooperative and non-cooperative game theory
+- Markov Decision Processes (MDP)
+- Reinforcement Learning optimization
+- Multi-echelon inventory theory
+- Service-level optimization
+- Stochastic lead-time modeling
 
-## Bellman Optimization
+---
 
-:contentReference[oaicite:1]{index=1}
+# Platform Design Principles
 
-## Bayesian Risk Propagation
-
-:contentReference[oaicite:2]{index=2}
-
-## Shapley Value Allocation
-
-:contentReference[oaicite:3]{index=3}
+- Resilience-first optimization
+- Geo-aware adaptive intelligence
+- Simulation-driven operational planning
+- Cloud-native modular architecture
+- Explainable AI-assisted decision systems
+- Research-grade reproducibility
+- Enterprise-scale deployment readiness
 
 ---
 
@@ -434,8 +430,6 @@ Transform the resilience platform into a production-grade AI-enabled strategic d
 | Optimization | PuLP, OR-Tools, SciPy |
 | Simulation | SimPy |
 | Reinforcement Learning | Stable-Baselines3 |
-| LLM Framework | LangChain |
-| Vector Database | ChromaDB |
 | APIs | FastAPI |
 | MLOps | MLflow, DVC |
 | Visualization | Streamlit, Plotly, Looker |
@@ -446,7 +440,7 @@ Transform the resilience platform into a production-grade AI-enabled strategic d
 
 # Repository Structure
 
-```text
+\`\`\`text
 geo-aware-mro/
 │
 ├── docs/
@@ -462,7 +456,9 @@ geo-aware-mro/
 │   ├── simulation/
 │   ├── game_theory/
 │   ├── reinforcement_learning/
-│   └── llm/
+│   ├── mlops/
+│   ├── risk_engine/
+│   └── analytics/
 │
 ├── notebooks/
 ├── tests/
@@ -472,3 +468,39 @@ geo-aware-mro/
 ├── data/
 ├── mlruns/
 └── README.md
+\`\`\`
+
+---
+
+# Strategic Value Proposition
+
+The Geo-Aware MRO Decision Intelligence System bridges the gap between traditional inventory management and modern resilience engineering by integrating:
+
+- AI-driven operational intelligence
+- Probabilistic geopolitical risk modeling
+- Simulation-based resilience analytics
+- Optimization-driven inventory control
+- Adaptive reinforcement learning policies
+- Enterprise-grade cloud-native deployment
+
+The platform is designed for aerospace, defense, energy, transportation, manufacturing, and other asset-intensive sectors where operational continuity and strategic resilience are mission-critical.
+
+---
+
+# Research and Engineering Scope
+
+This platform serves as:
+
+- An enterprise-grade supply chain intelligence system
+- A research-oriented operations research framework
+- A resilience engineering experimentation platform
+- A reinforcement learning optimization environment
+- A cloud-native MLOps deployment architecture
+- A strategic decision intelligence ecosystem
+
+---
+
+# License
+
+This repository is intended for research, academic experimentation, and enterprise architecture prototyping. Further licensing and deployment policies may evolve alongside productionization efforts.
+EOF
